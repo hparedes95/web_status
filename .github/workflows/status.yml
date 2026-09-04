@@ -52,6 +52,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          M365_TENANT_ID: ${{ secrets.M365_TENANT_ID }}
+          M365_CLIENT_ID: ${{ secrets.M365_CLIENT_ID }}
+          M365_CLIENT_SECRET: ${{ secrets.M365_CLIENT_SECRET }}
         run: python src/poller.py
 
       # estado.json guarda también el historial por horas que dibuja la barra del

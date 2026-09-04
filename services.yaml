@@ -5,7 +5,7 @@
 #   statuspage  JSON estándar en /api/v2/summary.json
 #   rss         feed RSS o Atom
 #   json        JSON con formato propio del proveedor
-#   graph       Microsoft Graph (solo si se elige la opción B de docs/02-fuentes.md)
+#   graph       Microsoft Graph: Service Health de nuestro tenant
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
 # categoria: agrupa las tarjetas del panel
@@ -27,13 +27,14 @@ servicios:
     categoria: nube
     detalle: "Correo, Teams, SharePoint, Copilot"
     alerta: true
+    # Microsoft NO publica ningún feed para Microsoft 365: su panel es una página
+    # web y nada más (comprobado con el workflow «Comprobar fuentes»). La única
+    # fuente real es Graph, que además da el estado de NUESTRO tenant.
+    # Requiere app en Entra ID con ServiceHealth.Read.All -> docs/04-arranque.md
     fuente:
-      tipo: rss                      # opción A: público, sin credenciales
-      url: "https://status.cloud.microsoft/api/feed"
-      # opción B, si A no sirve: requiere app en Entra ID con ServiceHealth.Read.All
-      # tipo: graph
-      # servicios: ["Exchange Online", "Microsoft Teams", "SharePoint Online",
-      #             "Identity Service", "Microsoft 365 Copilot"]
+      tipo: graph
+      servicios: ["Exchange Online", "Microsoft Teams", "SharePoint Online",
+                  "OneDrive for Business", "Microsoft 365 apps"]
 
   - id: azure
     nombre: "Azure"
@@ -53,7 +54,8 @@ servicios:
     fuente:
       tipo: json
       url: "https://health.aws.amazon.com/public/currentevents"
-      regiones: ["eu-west-1", "eu-south-2"]
+      regiones: ["eu-west-1", "eu-south-2", "ireland", "spain"]
+      ventana_horas: 6      # el feed trae el histórico completo: sin esto, siempre en rojo
 
   # ───────── IA ─────────
 

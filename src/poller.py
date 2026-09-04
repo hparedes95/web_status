@@ -185,15 +185,20 @@ def leer_rss(cfg: dict) -> Lectura:
 def leer_aws(cfg: dict) -> Lectura:
     """Health Dashboard público de AWS.
 
-    El formato no está versionado ni documentado como API estable, así que se lee
-    de forma defensiva: cualquier cosa que no encaje devuelve `desconocido` en vez
-    de inventarse un estado.
+    Sirve JSON en UTF-16 y **con el histórico completo**, no solo lo que está
+    pasando ahora: sin filtrar por fecha, cualquier región acabaría marcada como
+    degradada para siempre. El filtro que manda es la ventana temporal.
+
+    El formato no está documentado como API estable, así que se lee de forma
+    defensiva: lo que no encaje devuelve `desconocido` en vez de inventarse nada.
     """
     datos = pedir_json(cfg["url"])
     eventos = datos if isinstance(datos, list) else datos.get("events", datos.get("currentEvents"))
     if not isinstance(eventos, list):
         return Lectura("desconocido", "Formato inesperado en el feed de AWS", cfg["url"])
 
+    ventana = timedelta(hours=cfg.get("ventana_horas", 6))
+    limite = (ahora() - ventana).timestamp()
     regiones = [r.lower() for r in cfg.get("regiones", [])]
     servicios = [s.lower() for s in cfg.get("servicios", [])]
     afectan = []
@@ -201,6 +206,13 @@ def leer_aws(cfg: dict) -> Lectura:
     for evento in eventos:
         if not isinstance(evento, dict):
             continue
+        try:
+            cuando = float(evento.get("date", 0))
+        except (TypeError, ValueError):
+            continue
+        if cuando < limite:
+            continue
+
         texto = json.dumps(evento, ensure_ascii=False).lower()
         if regiones and not any(r in texto for r in regiones):
             continue
@@ -209,8 +221,91 @@ def leer_aws(cfg: dict) -> Lectura:
         afectan.append(evento.get("event_title") or evento.get("summary") or "Evento sin título")
 
     if not afectan:
-        return Lectura("operativo", "Sin eventos en nuestras regiones", cfg["url"])
+        return Lectura("operativo", "Sin eventos recientes en nuestras regiones", cfg["url"])
     return Lectura("degradado", "; ".join(afectan[:3]), cfg["url"], afectan)
+
+
+# Vocabulario de Microsoft Graph -> el nuestro.
+SALUD_M365 = {
+    "serviceOperational": "operativo",
+    "serviceRestored": "operativo",
+    "resolved": "operativo",
+    "resolvedExternal": "operativo",
+    "falsePositive": "operativo",
+    "postIncidentReviewPublished": "operativo",
+    "mitigated": "degradado",
+    "mitigatedExternal": "degradado",
+    "extendedRecovery": "degradado",
+    "investigating": "degradado",
+    "verifyingService": "degradado",
+    "restoringService": "degradado",
+    "investigationSuspended": "degradado",
+    "reported": "degradado",
+    "confirmed": "degradado",
+    "serviceDegradation": "degradado",
+    "serviceInterruption": "caido",
+}
+
+
+def leer_graph(cfg: dict) -> Lectura:
+    """Service Health de Microsoft 365, vía Microsoft Graph.
+
+    Es la única fuente real para Microsoft 365: su panel público no publica
+    ningún feed, solo una página web (comprobado con scripts/probe.py). A cambio,
+    Graph da el estado de *nuestro* tenant, no el global, que es mejor dato.
+
+    Necesita una aplicación en Entra ID con el permiso de aplicación
+    ServiceHealth.Read.All y consentimiento de administrador, y sus credenciales
+    en los secretos del repositorio.
+    """
+    tenant = os.environ.get("M365_TENANT_ID", "")
+    cliente = os.environ.get("M365_CLIENT_ID", "")
+    secreto = os.environ.get("M365_CLIENT_SECRET", "")
+    panel = "https://status.cloud.microsoft/"
+
+    if not (tenant and cliente and secreto):
+        return Lectura(
+            "desconocido",
+            "Falta la aplicación de Entra ID: Microsoft no publica ningún feed "
+            "para Microsoft 365, así que este estado solo puede venir de Graph "
+            "(ver docs/04-arranque.md)",
+            panel,
+        )
+
+    cuerpo = urllib.parse.urlencode({
+        "grant_type": "client_credentials",
+        "client_id": cliente,
+        "client_secret": secreto,
+        "scope": "https://graph.microsoft.com/.default",
+    }).encode()
+    peticion = urllib.request.Request(
+        f"https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token",
+        data=cuerpo,
+        headers={"User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded"},
+    )
+    with urllib.request.urlopen(peticion, timeout=TIMEOUT) as r:
+        token = json.loads(decodificar(r.read())).get("access_token", "")
+    if not token:
+        return Lectura("desconocido", "Entra ID no devolvió ningún token", panel)
+
+    datos = pedir_json(
+        "https://graph.microsoft.com/v1.0/admin/serviceAnnouncement/healthOverviews",
+        {"Authorization": f"Bearer {token}"},
+    )
+    quiero = cfg.get("servicios") or []
+    todos = datos.get("value", [])
+    elegidos = [s for s in todos if not quiero or s.get("service") in quiero]
+    if not elegidos:
+        return Lectura("desconocido", f"Graph no devolvió los servicios {quiero}", panel)
+
+    estado = peor([SALUD_M365.get(s.get("status", ""), "desconocido") for s in elegidos])
+    rotos = [
+        f"{s['service']} ({s.get('status')})"
+        for s in elegidos
+        if SALUD_M365.get(s.get("status", "")) != "operativo"
+    ]
+    mensaje = ", ".join(rotos) if rotos else f"{len(elegidos)} servicios operativos"
+    return Lectura(estado, mensaje, panel, rotos)
 
 
 def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
@@ -252,6 +347,7 @@ ADAPTADORES = {
     "statuspage": lambda cfg, _id: leer_statuspage(cfg),
     "rss": lambda cfg, _id: leer_rss(cfg),
     "json": lambda cfg, _id: leer_aws(cfg),
+    "graph": lambda cfg, _id: leer_graph(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 
