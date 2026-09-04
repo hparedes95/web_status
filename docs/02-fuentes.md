@@ -13,7 +13,20 @@
 | GitHub Copilot | `www.githubstatus.com`, componente *Copilot* | ✅ Operativo |
 | Azure | RSS de estado de Azure | ✅ Feed válido, sin avisos |
 | AWS | Health Dashboard público | ✅ Operativo, **tras dos correcciones** |
+| Google Gemini | Paneles de Google Cloud y Workspace | ✅ Lista de incidencias en JSON |
 | Microsoft 365 | — | ❌ **No existe feed público** |
+
+## Google: dos paneles para un mismo producto
+
+Google publica `incidents.json` en dos sitios, con el mismo formato: el panel de Cloud y el
+de Workspace. **Gemini aparece en ambos** —en Workspace como aplicación, en Cloud como API
+de Vertex AI—, así que se consultan los dos y manda la peor señal. Si uno falla, el otro
+sigue dando dato.
+
+Dos detalles del formato: una incidencia está abierta cuando el campo `end` viene vacío, y
+el filtro por producto es por subcadena y sin distinguir mayúsculas, que aguanta mejor los
+cambios de marca de Google. Además se ignoran las incidencias abiertas que no se tocan
+desde hace más de 48 horas: casi siempre son avisos que a Google se le olvidó cerrar.
 
 ## Las dos correcciones que hizo falta hacer
 

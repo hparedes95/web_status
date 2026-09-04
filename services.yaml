@@ -7,6 +7,7 @@
 #   json        JSON con formato propio del proveedor
 #   graph       Microsoft Graph: Service Health de nuestro tenant
 #   m365        Graph si hay credenciales; si no, sonda propia
+#   google      paneles de estado de Google Cloud y Workspace
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
 # categoria: agrupa las tarjetas del panel
@@ -100,6 +101,19 @@ servicios:
       tipo: statuspage
       url: "https://www.githubstatus.com"     # misma peticion que el bloque anterior
       componentes: ["Copilot"]                # separados: una averia de Copilot no apaga GitHub
+
+  - id: gemini
+    nombre: "Google Gemini"
+    categoria: ia
+    alerta: false
+    fuente:
+      tipo: google
+      # Gemini aparece en los dos paneles: en Workspace como aplicación y en
+      # Cloud como API, así que se miran ambos y manda la peor señal.
+      urls:
+        - "https://status.cloud.google.com/incidents.json"
+        - "https://www.google.com/appsstatus/dashboard/incidents.json"
+      productos: ["gemini", "vertex ai"]
 
   # ───────── Sin API: botón manual ─────────
   # Nadie publica esto en formato consultable. Si nadie pulsa el botón,

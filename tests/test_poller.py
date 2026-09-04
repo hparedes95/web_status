@@ -13,6 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+import yaml  # noqa: E402
+
 import poller  # noqa: E402
 
 fallos = []
@@ -68,6 +70,46 @@ fingir_json(GITHUB)
 r = poller.leer_statuspage({"url": "https://www.githubstatus.com", "componentes": ["Inventado"]})
 comprobar(r.estado == "desconocido", "un componente inexistente -> desconocido, no verde")
 
+# ── Paneles de estado de Google ──────────────────────────────────────────
+print("\nGoogle (Cloud y Workspace)")
+
+AHORA = poller.iso(poller.ahora())
+INCIDENCIAS = [
+    {  # cerrada: no debe contar
+        "end": "2026-09-01T10:00:00+00:00", "modified": AHORA,
+        "service_name": "Gemini", "affected_products": [{"title": "Gemini"}],
+        "status_impact": "SERVICE_OUTAGE", "external_desc": "Ya resuelta",
+    },
+    {  # abierta pero de otro producto
+        "end": None, "modified": AHORA,
+        "service_name": "Google Chat", "affected_products": [{"title": "Google Chat"}],
+        "status_impact": "SERVICE_OUTAGE", "external_desc": "Chat caído",
+    },
+]
+poller.pedir_json = lambda url, cabeceras=None: INCIDENCIAS
+r = poller.leer_google({"urls": ["https://x/incidents.json"], "productos": ["gemini"]})
+comprobar(r.estado == "operativo", "una incidencia cerrada de Gemini no lo pone en rojo")
+comprobar(r.estado == "operativo", "una incidencia de otro producto tampoco")
+
+ABIERTA = [{
+    "end": None, "modified": AHORA,
+    "service_name": "Vertex AI", "affected_products": [{"title": "Vertex AI"}],
+    "status_impact": "SERVICE_DISRUPTION", "external_desc": "Latencia elevada\nmás detalle",
+}]
+poller.pedir_json = lambda url, cabeceras=None: ABIERTA
+r = poller.leer_google({"urls": ["https://x/incidents.json"], "productos": ["gemini", "vertex ai"]})
+comprobar(r.estado == "degradado", "una interrupción abierta de Vertex AI lo pone en ámbar")
+comprobar(r.mensaje == "Latencia elevada", "el mensaje se queda con la primera línea")
+
+CADUCA = [{
+    "end": None, "modified": "2026-01-01T00:00:00+00:00",
+    "service_name": "Gemini", "affected_products": [{"title": "Gemini"}],
+    "status_impact": "SERVICE_OUTAGE", "external_desc": "Abierta desde hace meses",
+}]
+poller.pedir_json = lambda url, cabeceras=None: CADUCA
+r = poller.leer_google({"urls": ["https://x/incidents.json"], "productos": ["gemini"]})
+comprobar(r.estado == "operativo", "una incidencia abierta pero sin tocar en meses se ignora")
+
 # ── Un adaptador roto no puede tumbar el ciclo ───────────────────────────
 print("\nTolerancia a fallos")
 
@@ -116,7 +158,10 @@ poller.ESTADO = temporal / "estado.json"
 
 comprobar(poller.main() == 0, "el ciclo termina sin errores aunque no haya red")
 salida = json.loads(poller.SALIDA.read_text())
-comprobar(len(salida["servicios"]) == 10, "genera los 10 indicadores")
+# El número sale de la configuración, no fijado a mano: añadir un servicio no
+# debe romper la prueba.
+esperados = len(yaml.safe_load(poller.CONFIG.read_text())["servicios"])
+comprobar(len(salida["servicios"]) == esperados, f"genera los {esperados} indicadores")
 comprobar(all(s["estado"] == "desconocido" for s in salida["servicios"]),
           "sin red, todo queda en desconocido (nunca en verde)")
 comprobar(enviados == [], "desconocido no dispara ninguna alerta")
@@ -137,14 +182,18 @@ primera = ciclo_con("caido")
 comprobar(primera == [], "primera lectura en rojo: aún no avisa (antirrebote)")
 
 segunda = ciclo_con("caido")
-comprobar(len(segunda) == 3, "segunda lectura en rojo: avisa de los 3 con alerta activada")
+con_alerta = sum(
+    1 for s in yaml.safe_load(poller.CONFIG.read_text())["servicios"] if s.get("alerta")
+)
+comprobar(len(segunda) == con_alerta,
+          f"segunda lectura en rojo: avisa de los {con_alerta} con alerta activada")
 comprobar(all(t.startswith("🔴") for t in segunda), "el aviso de caída va marcado en rojo")
 
 tercera = ciclo_con("caido")
 comprobar(tercera == [], "sigue caído: no repite el aviso en cada ciclo")
 
 recuperacion = ciclo_con("operativo")
-comprobar(len(recuperacion) == 3, "al recuperarse avisa una vez por servicio")
+comprobar(len(recuperacion) == con_alerta, "al recuperarse avisa una vez por servicio")
 comprobar(all(t.startswith("🟢") and "tras" in t for t in recuperacion),
           "el aviso de recuperación incluye la duración")
 

@@ -312,6 +312,76 @@ def leer_graph(cfg: dict) -> Lectura:
     return Lectura(estado, mensaje, panel, rotos)
 
 
+# Vocabulario del panel de estado de Google -> el nuestro.
+IMPACTO_GOOGLE = {
+    "SERVICE_OUTAGE": "caido",
+    "SERVICE_DISRUPTION": "degradado",
+    "SERVICE_INFORMATION": "degradado",
+}
+
+
+def leer_google(cfg: dict) -> Lectura:
+    """Paneles de estado de Google (Cloud y Workspace).
+
+    Los dos publican el mismo formato: una lista de incidencias donde `end` vacío
+    significa que sigue abierta. Se consultan ambos porque un mismo producto puede
+    aparecer en uno u otro —Gemini está en Workspace como aplicación y en Cloud
+    como API—, y se filtra por nombre de producto sin distinguir mayúsculas, que
+    aguanta mejor los cambios de marca de Google.
+    """
+    urls = cfg.get("urls") or [cfg["url"]]
+    productos = [p.lower() for p in cfg.get("productos", [])]
+    ventana = timedelta(hours=cfg.get("ventana_horas", 48))
+    limite = ahora() - ventana
+
+    incidencias, leidas = [], 0
+    for url in urls:
+        try:
+            datos = pedir_json(url)
+        except Exception:  # noqa: BLE001 — con que responda una de las dos, basta
+            continue
+        if not isinstance(datos, list):
+            continue
+        leidas += 1
+
+        for inc in datos:
+            if not isinstance(inc, dict) or inc.get("end"):
+                continue  # cerrada
+
+            # Una incidencia abierta pero sin tocar en días es casi siempre uno
+            # de esos avisos que a Google se le olvida cerrar.
+            marca = inc.get("modified") or inc.get("begin") or ""
+            try:
+                if datetime.fromisoformat(marca.replace("Z", "+00:00")) < limite:
+                    continue
+            except (ValueError, AttributeError):
+                pass
+
+            nombres = [inc.get("service_name", "")] + [
+                p.get("title", "") for p in inc.get("affected_products", []) if isinstance(p, dict)
+            ]
+            texto = " ".join(nombres).lower()
+            if productos and not any(p in texto for p in productos):
+                continue
+
+            incidencias.append((
+                IMPACTO_GOOGLE.get(inc.get("status_impact", ""), "degradado"),
+                (inc.get("external_desc") or "Incidencia sin descripción").split("\n")[0][:120],
+            ))
+
+    if not leidas:
+        return Lectura("desconocido", "No se pudo leer ningún panel de estado de Google")
+    panel = urls[0].rsplit("/", 1)[0]
+    if not incidencias:
+        return Lectura("operativo", "Sin incidencias abiertas", panel)
+    return Lectura(
+        peor([e for e, _ in incidencias]),
+        "; ".join(m for _, m in incidencias[:2]),
+        panel,
+        [m for _, m in incidencias],
+    )
+
+
 def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
     """Estado marcado a mano mediante issues etiquetadas `caida:<id>`.
 
@@ -398,6 +468,7 @@ ADAPTADORES = {
     "json": lambda cfg, _id: leer_aws(cfg),
     "graph": lambda cfg, _id: leer_graph(cfg),
     "m365": lambda cfg, _id: leer_m365(cfg),
+    "google": lambda cfg, _id: leer_google(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 

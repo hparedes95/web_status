@@ -14,9 +14,10 @@ Nada más.
 | 5 | **ChatGPT / OpenAI** | Página de estado (JSON) | ✅ |
 | 6 | **GitHub** (repositorios, Actions, pull requests) | Página de estado (JSON) | ✅ |
 | 7 | **GitHub Copilot** | La misma página, otro componente | ✅ |
-| 8 | **Telefónica / Movistar** | Botón manual | ❌ |
-| 9 | **Vodafone** | Botón manual | ❌ |
-| 10 | **Suministro eléctrico** | Botón manual | ❌ |
+| 8 | **Google Gemini** | Paneles de estado de Google Cloud y Workspace | ✅ |
+| 9 | **Telefónica / Movistar** | Botón manual | ❌ |
+| 10 | **Vodafone** | Botón manual | ❌ |
+| 11 | **Suministro eléctrico** | Botón manual | ❌ |
 
 GitHub y Copilot salen de la **misma** página de estado, filtrando por componente: son dos
 luces independientes con una sola petición. Añadir un servicio más que tenga página de

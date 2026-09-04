@@ -10,7 +10,7 @@ Una página con **una luz por servicio** y **una alerta cuando alguna se pone en
 
 ## Qué vigila
 
-**Automático** (feeds oficiales): Azure · AWS · Claude · ChatGPT · GitHub · GitHub Copilot
+**Automático** (feeds oficiales): Azure · AWS · Claude · ChatGPT · GitHub · GitHub Copilot · Google Gemini
 
 **Automático con credenciales**: Microsoft 365 (vía Microsoft Graph — Microsoft no publica feed)
 
