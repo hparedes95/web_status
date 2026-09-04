@@ -24,6 +24,7 @@ responderla en una pantalla y en menos de 10 segundos.
 | [04 — Plan por fases](docs/04-plan-fases.md) | Fases, backlog, estimaciones y criterios de aceptación |
 | [05 — Riesgos](docs/05-riesgos.md) | Riesgos, probabilidad, impacto y mitigación |
 | [06 — Decisiones abiertas](docs/06-decisiones-abiertas.md) | Lo que hay que decidir antes de escribir código |
+| [07 — Catálogo de indicadores](docs/07-indicadores.md) | Qué señal concreta vigilar en cada servicio, por prioridad |
 
 ## Resumen en tres líneas
 
