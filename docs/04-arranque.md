@@ -76,6 +76,47 @@ lugar del global. Requiere una aplicación en Entra ID con el permiso
 `ServiceHealth.Read.All` y consentimiento de administrador; el trámite depende de terceros,
 así que conviene pedirlo cuanto antes si se va por ahí.
 
+## Si algún día se pone el repositorio en privado
+
+Poner el repositorio en privado **no hace privado el panel**. Conviene saber qué cambia
+antes de tocarlo (son condiciones de GitHub: confirmarlas en la facturación de la cuenta,
+porque cambian con el tiempo).
+
+| | Repo público (hoy) | Repo privado |
+|---|---|---|
+| ¿Hay Pages? | Sí, en cualquier plan | **Solo con plan de pago** (Pro, Team o Enterprise) |
+| ¿Quién ve el panel? | Todo internet | **Todo internet igualmente** |
+| Panel de verdad privado | — | Solo con **Enterprise Cloud** (control de acceso en Pages) |
+| Minutos de Actions | Gratis, ilimitados | Cuota mensual: hay que **subir el intervalo** |
+
+Es decir: pasar a privado esconde el **código y la configuración**, no la página. Para que
+el panel deje de ser visible desde fuera hace falta otra cosa.
+
+### Si lo que se quiere es que solo lo veáis vosotros
+
+| Opción | Coste | Cómo queda |
+|---|---|---|
+| **Cloudflare Pages + Cloudflare Access** | 0 € hasta 50 usuarios | El poller sigue en GitHub Actions y despliega a Cloudflare; Access pide identificarse (correo, Google o Entra ID) antes de mostrar nada. **La más barata que funciona de verdad** |
+| **VPS con el contenedor** | ~5 €/mes | Control total, se puede restringir por IP o VPN |
+| **GitHub Enterprise Cloud** | Caro | Solo tiene sentido si la organización ya lo tiene |
+| **Dejar el panel público y no publicar nada sensible** | 0 € | Los estados de proveedores ya son públicos uno a uno. Basta con no poner nombres de sedes ni datos internos en `services.yaml` |
+
+### El intervalo, si se pasa a privado
+
+Con repositorio privado los minutos de Actions dejan de ser gratis. Cada ejecución de este
+workflow —checkout, dependencias, sondeo y despliegue— ronda los **2 minutos facturados**,
+así que:
+
+| Intervalo | Ejecuciones/mes | Minutos aprox. |
+|---|---|---|
+| 10 min (actual) | 4.320 | ~8.600 |
+| 30 min | 1.440 | ~2.900 |
+| 1 hora | 720 | ~1.400 |
+
+Con la cuota gratuita de un plan de pago (del orden de 2.000–3.000 min/mes) eso deja el
+sondeo en **cada 30 min como mucho, y una hora con margen**. Mídelo en las primeras
+ejecuciones reales antes de decidir: el número exacto sale en la pestaña Actions.
+
 ## Después
 
 | Qué | Dónde |

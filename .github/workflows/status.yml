@@ -4,7 +4,9 @@ on:
   schedule:
     # Cada 10 minutos. Actions no es puntual: con carga puede retrasarse bastante,
     # así que la cadencia real es de 10-20 min. Los minutos son gratis porque el
-    # repositorio es público; si algún día pasa a privado, subir el intervalo a 30.
+    # repositorio es público. Si algún día pasa a privado, dejan de serlo: cada
+    # ejecución ronda los 2 min facturados, así que habría que subir el intervalo
+    # a 30 min o a 1 hora (ver docs/04-arranque.md).
     - cron: "*/10 * * * *"
   # Al abrir, cerrar o etiquetar una issue `caida:*` el panel se actualiza al momento
   # en vez de esperar al siguiente ciclo.
