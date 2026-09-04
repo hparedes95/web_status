@@ -75,7 +75,11 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
           }
 
+      # `enablement: true` activa GitHub Pages en el repositorio si aún no lo está,
+      # así no hace falta tocar los ajustes a mano.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

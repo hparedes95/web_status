@@ -1,0 +1,40 @@
+# Sonda manual: dice qué devuelve de verdad cada URL candidata.
+# Actions > Comprobar fuentes > Run workflow.
+#
+# Existe porque las URLs de estado de los proveedores cambian sin avisar y, cuando
+# una luz se queda en «sin datos», hay que averiguar la nueva sin ir probando a ciegas.
+name: Comprobar fuentes
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "URLs a sondear, separadas por espacios (vacío = las del panel)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  sondear:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Sondear
+        run: |
+          URLS="${{ inputs.urls }}"
+          if [ -z "$URLS" ]; then
+            URLS="https://status.anthropic.com/api/v2/summary.json
+                  https://status.openai.com/api/v2/summary.json
+                  https://www.githubstatus.com/api/v2/summary.json
+                  https://azure.status.microsoft/en-us/status/feed/
+                  https://health.aws.amazon.com/public/currentevents
+                  https://status.cloud.microsoft/api/feed"
+          fi
+          python scripts/probe.py $URLS

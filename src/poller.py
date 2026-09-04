@@ -87,8 +87,24 @@ def pedir(url: str, cabeceras: dict | None = None) -> bytes:
         return respuesta.read()
 
 
+def decodificar(crudo: bytes) -> str:
+    """Texto a partir de los bytes, respetando la marca de orden (BOM).
+
+    No todos los proveedores sirven UTF-8: el feed público de AWS llega en
+    UTF-16, y darlo por UTF-8 rompe la lectura con un error de codificación.
+    """
+    for bom, codificacion in (
+        (b"\xff\xfe", "utf-16"),
+        (b"\xfe\xff", "utf-16"),
+        (b"\xef\xbb\xbf", "utf-8-sig"),
+    ):
+        if crudo.startswith(bom):
+            return crudo.decode(codificacion)
+    return crudo.decode("utf-8", errors="replace")
+
+
 def pedir_json(url: str, cabeceras: dict | None = None):
-    return json.loads(pedir(url, cabeceras).decode("utf-8"))
+    return json.loads(decodificar(pedir(url, cabeceras)))
 
 
 # ─────────────────────────── adaptadores ───────────────────────────
