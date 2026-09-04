@@ -25,9 +25,25 @@ No hay servidor. Todo vive dentro de GitHub.
 | `services.yaml` | Los 10 indicadores y la regla de alerta. Añadir uno es editar aquí |
 | `src/poller.py` | Lee las fuentes, normaliza, decide alertas y genera `site/status.json` |
 | `site/index.html` | El panel. Página estática que recarga `status.json` cada minuto |
-| `estado.json` | Estado anterior de cada servicio, para detectar transiciones. Lo escribe el workflow |
+| `estado.json` | Estado anterior y el historial por horas de cada servicio. Lo escribe el workflow |
 | `.github/workflows/status.yml` | El cron, el despliegue a Pages y el commit |
 | `tests/test_poller.py` | Pruebas sin red: `python tests/test_poller.py` |
+
+## La barra de 72 horas
+
+Cada fila del panel lleva una barra con las últimas 72 horas, una casilla por hora. Sale de
+un campo de texto en `estado.json`: una letra por hora (`o` operativo, `d` degradado,
+`c` caído, `u` ilegible, `-` sin registro). Siete días ocupan 168 caracteres por servicio,
+así que el historial completo son unos pocos KB.
+
+Dos decisiones sobre ese dato:
+
+- **Dentro de una misma hora se guarda la peor lectura.** Una caída de diez minutos no puede
+  desaparecer porque las cinco lecturas siguientes fueran buenas.
+- **El porcentaje de disponibilidad ignora las horas ilegibles y las que no se registraron.**
+  Contarlas como caída convertiría un adaptador roto en una supuesta indisponibilidad del
+  proveedor. El hueco sigue siendo visible: en la barra sale en gris y la fila queda marcada
+  como «sin datos», que es donde corresponde.
 
 ## Estados
 
@@ -94,9 +110,9 @@ repositorio. **Nunca en el código: el repositorio es público.**
   así que la cadencia real es de 10 a 20 min. Los minutos son gratis porque el repositorio
   es público; si algún día pasa a privado, hay que subir el intervalo a 30 min para caber
   en el plan gratuito.
-- **`estado.json` se commitea solo cuando cambia algo**, más una vez al día. Ese commit
-  diario no es decorativo: GitHub desactiva los workflows programados tras 60 días sin
-  actividad en el repositorio.
+- **`estado.json` se commitea solo cuando cambia algo.** Como incluye el historial por
+  horas, eso son unos 24 commits al día. No es ruido gratuito: mantiene vivo el repositorio,
+  y GitHub desactiva los workflows programados tras 60 días sin actividad.
 - El `concurrency` del workflow evita que dos ciclos se pisen al escribir o al desplegar.
 
 ## Mantenimiento

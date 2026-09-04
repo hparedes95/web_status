@@ -8,6 +8,11 @@
 #   graph       Microsoft Graph (solo si se elige la opción B de docs/02-fuentes.md)
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
+# categoria: agrupa las tarjetas del panel
+#   nube  -> Nube y puesto de trabajo
+#   ia    -> Desarrollo e IA
+#   infra -> Conectividad y suministro
+#
 # alerta: true -> se avisa por Telegram al pasar a rojo. Regla en docs/03-implementacion.md
 #
 # Los servicios `manual` se encienden abriendo una issue con la etiqueta
@@ -19,6 +24,7 @@ servicios:
 
   - id: microsoft-365
     nombre: "Microsoft 365"
+    categoria: nube
     detalle: "Correo, Teams, SharePoint, Copilot"
     alerta: true
     fuente:
@@ -31,6 +37,7 @@ servicios:
 
   - id: azure
     nombre: "Azure"
+    categoria: nube
     alerta: true
     fuente:
       tipo: rss
@@ -41,6 +48,7 @@ servicios:
 
   - id: aws
     nombre: "AWS"
+    categoria: nube
     alerta: true
     fuente:
       tipo: json
@@ -51,6 +59,7 @@ servicios:
 
   - id: claude
     nombre: "Claude"
+    categoria: ia
     alerta: false
     fuente:
       tipo: statuspage
@@ -58,6 +67,7 @@ servicios:
 
   - id: chatgpt
     nombre: "ChatGPT"
+    categoria: ia
     alerta: false
     fuente:
       tipo: statuspage
@@ -65,6 +75,7 @@ servicios:
 
   - id: github
     nombre: "GitHub"
+    categoria: ia
     detalle: "Repositorios, Actions, pull requests"
     alerta: false
     fuente:
@@ -74,6 +85,7 @@ servicios:
 
   - id: copilot
     nombre: "GitHub Copilot"
+    categoria: ia
     alerta: false
     fuente:
       tipo: statuspage
@@ -86,6 +98,7 @@ servicios:
 
   - id: telefonica
     nombre: "Telefónica / Movistar"
+    categoria: infra
     detalle: "Movistar es la marca comercial de Telefónica: un indicador, no dos"
     alerta: false
     fuente:
@@ -93,12 +106,14 @@ servicios:
 
   - id: vodafone
     nombre: "Vodafone"
+    categoria: infra
     alerta: false
     fuente:
       tipo: manual
 
   - id: energia
     nombre: "Suministro eléctrico"
+    categoria: infra
     alerta: false
     fuente:
       tipo: manual

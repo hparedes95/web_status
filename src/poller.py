@@ -32,6 +32,14 @@ TIMEOUT = 20
 # —hay que verlo— pero menos que un problema real y confirmado.
 GRAVEDAD = {"operativo": 0, "desconocido": 1, "degradado": 2, "caido": 3}
 
+# El historial se guarda como una letra por hora: es lo que dibuja la barra del
+# panel y ocupa unos pocos KB al año. `-` es una hora sin registro (el workflow
+# no llegó a ejecutarse), que no cuenta para el porcentaje de disponibilidad.
+LETRA = {"operativo": "o", "degradado": "d", "caido": "c", "desconocido": "u"}
+ESTADO_DE_LETRA = {v: k for k, v in LETRA.items()}
+HORAS_GUARDADAS = 168   # 7 días: la ventana del porcentaje
+HORAS_VISIBLES = 72     # 3 días: lo que se dibuja en la barra
+
 # Vocabulario de Statuspage -> el nuestro. `under_maintenance` cae en degradado:
 # se ve en el panel, pero como las alertas solo saltan con `caido`, nunca avisa.
 COMPONENTE = {
@@ -245,6 +253,50 @@ def leer(servicio: dict) -> Lectura:
         return Lectura("desconocido", f"No se pudo leer la fuente: {e}", cfg.get("url", ""))
 
 
+def actualizar_historial(anterior: dict, estado: str, momento: datetime) -> tuple[str, str]:
+    """Añade la lectura a la línea temporal por horas.
+
+    Dentro de una misma hora se conserva **la peor** lectura: una caída de diez
+    minutos no debe desaparecer porque las cinco lecturas siguientes fueran buenas.
+    """
+    horas = anterior.get("horas", "")
+    ultima = anterior.get("ultima_hora")
+    hora = momento.replace(minute=0, second=0, microsecond=0)
+    letra = LETRA[estado]
+
+    if not ultima:
+        horas += letra
+    else:
+        try:
+            previa = datetime.fromisoformat(ultima.replace("Z", "+00:00"))
+        except ValueError:
+            previa = hora
+        saltos = int((hora - previa).total_seconds() // 3600)
+        if saltos <= 0 and horas:
+            previo = ESTADO_DE_LETRA.get(horas[-1], "desconocido")
+            horas = horas[:-1] + LETRA[peor([previo, estado])]
+        elif saltos <= 0:
+            horas = letra
+        else:
+            horas += "-" * (saltos - 1) + letra
+
+    return horas[-HORAS_GUARDADAS:], iso(hora)
+
+
+def disponibilidad(horas: str) -> float | None:
+    """Porcentaje de horas operativas sobre las horas con lectura concluyente.
+
+    Las horas sin registro (`-`) y las ilegibles (`u`) quedan fuera del cálculo:
+    no sabemos qué pasó en ellas, y contarlas como caída convertiría un adaptador
+    roto en una supuesta indisponibilidad del proveedor. El hueco sigue siendo
+    visible en la barra y en la etiqueta «sin datos», que es donde corresponde.
+    """
+    concluyentes = [h for h in horas if h in ("o", "d", "c")]
+    if len(concluyentes) < 6:  # con menos de 6 horas el número engaña más que informa
+        return None
+    return round(100 * sum(1 for h in concluyentes if h == "o") / len(concluyentes), 2)
+
+
 # ─────────────────────────── alertas ───────────────────────────
 
 
@@ -321,6 +373,7 @@ def main() -> int:
         elif not roto_desde:
             roto_desde = iso(momento)
 
+        horas, ultima_hora = actualizar_historial(anterior, lectura.estado, momento)
         alertado = bool(anterior.get("alertado", False))
         nombre = servicio["nombre"]
         enlace = lectura.url or servicio["fuente"].get("url", "")
@@ -347,6 +400,8 @@ def main() -> int:
             "fallos": fallos,
             "alertado": alertado,
             "roto_desde": roto_desde,
+            "horas": horas,
+            "ultima_hora": ultima_hora,
         }
         salida.append(
             {
@@ -357,6 +412,9 @@ def main() -> int:
                 "mensaje": lectura.mensaje,
                 "url": enlace,
                 "desde": nuevo_estado[sid]["desde"],
+                "categoria": servicio.get("categoria", "otros"),
+                "historial": horas[-HORAS_VISIBLES:],
+                "disponibilidad": disponibilidad(horas),
                 "manual": servicio["fuente"].get("tipo") == "manual",
                 "alerta": bool(servicio.get("alerta")),
             }

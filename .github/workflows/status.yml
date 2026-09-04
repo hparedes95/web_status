@@ -50,6 +50,10 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python src/poller.py
 
+      # estado.json guarda también el historial por horas que dibuja la barra del
+      # panel, así que cambia al menos una vez por hora: ~24 commits al día. Eso
+      # mantiene vivo el repositorio, que es lo que evita que GitHub desactive el
+      # workflow programado por inactividad.
       - name: Guardar el estado si ha cambiado
         run: |
           if [ -n "$(git status --porcelain estado.json)" ]; then
