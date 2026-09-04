@@ -24,6 +24,7 @@ avería con el operador y la marca, el resto deja de llamar al mismo soporte.
 | [01 — Alcance](docs/01-alcance.md) | Qué entra, qué no, y las tres limitaciones que hay que asumir |
 | [02 — Fuentes](docs/02-fuentes.md) | De dónde sale cada dato y la decisión pendiente sobre Microsoft 365 |
 | [03 — Implementación](docs/03-implementacion.md) | Cómo funciona, la regla de la alerta y las tareas |
+| [04 — Arranque](docs/04-arranque.md) | Qué hace falta para empezar y dónde alojarlo (GitHub o VPS) |
 | [referencia/](docs/referencia/) | Análisis previo, con un alcance más amplio que se descartó |
 
 ## Antes de escribir código
