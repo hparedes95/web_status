@@ -8,6 +8,7 @@ salida a internet.
     python scripts/probe.py URL [URL...]
 """
 
+import json
 import re
 import sys
 import urllib.error
@@ -55,6 +56,20 @@ def sondear(url: str) -> None:
             print(f"      · {entrada.get('title', '')[:90]}")
     except ImportError:
         pass
+
+    # Si es JSON, lo útil es la forma: qué campos trae y qué valores toman.
+    try:
+        datos = json.loads(crudo.decode("utf-8", errors="replace").lstrip("\ufeff"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        datos = None
+    if datos is not None:
+        if isinstance(datos, list):
+            print(f"   JSON: lista de {len(datos)} elementos")
+            if datos and isinstance(datos[0], dict):
+                print(f"   campos: {sorted(datos[0].keys())}")
+                print(f"   primer elemento: {json.dumps(datos[0], ensure_ascii=False)[:600]}")
+        elif isinstance(datos, dict):
+            print(f"   JSON: objeto con campos {sorted(datos.keys())[:20]}")
 
     # Si es HTML, casi siempre es una aplicación de una sola página: lo que
     # interesa entonces no es el HTML sino de dónde saca sus datos.
