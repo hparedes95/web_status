@@ -7,7 +7,7 @@ Una página con **una luz por servicio** y **una alerta cuando alguna se pone en
 
 ## Qué vigila
 
-**Automático** (feeds oficiales): Microsoft 365 · Azure · AWS · Claude · ChatGPT · GitHub Copilot
+**Automático** (feeds oficiales): Microsoft 365 · Azure · AWS · Claude · ChatGPT · GitHub · GitHub Copilot
 
 **Manual** (no existe API): Telefónica/Movistar · Vodafone · Suministro eléctrico
 

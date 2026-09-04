@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Comprueba cuáles de las seis fuentes automáticas del panel responden hoy.
+# Comprueba cuáles de las fuentes automáticas del panel responden hoy.
+# Son 6 peticiones para 7 indicadores: GitHub y Copilot comparten página de estado.
 # Es la tarea 1 del plan: NO dar por buena la estimación sin haber pasado esto.
 #
 #   ./scripts/check-sources.sh
@@ -16,7 +17,7 @@ ok=0; ko=0
 FUENTES=(
   "Claude|https://status.anthropic.com/api/v2/summary.json|json"
   "ChatGPT|https://status.openai.com/api/v2/summary.json|json"
-  "GitHub Copilot|https://www.githubstatus.com/api/v2/summary.json|json"
+  "GitHub + Copilot|https://www.githubstatus.com/api/v2/summary.json|json"
   "Azure|https://azure.status.microsoft/en-us/status/feed/|rss"
   "AWS|https://health.aws.amazon.com/public/currentevents|json"
   "Microsoft 365|https://status.cloud.microsoft/api/feed|rss"
@@ -41,7 +42,7 @@ for entrada in "${FUENTES[@]}"; do
       *)                 veredicto="200 pero el cuerpo no parece $tipo"; ko=$((ko+1)) ;;
     esac
   fi
-  printf '  %-18s %s\n' "$nombre" "$veredicto"
+  printf '  %-20s %s\n' "$nombre" "$veredicto"
   rm -f "$cuerpo"
 done
 

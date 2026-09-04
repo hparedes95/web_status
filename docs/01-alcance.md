@@ -12,13 +12,15 @@ Nada más.
 | 3 | **AWS** | Health Dashboard público | ✅ |
 | 4 | **Claude** (Anthropic) | Página de estado (JSON) | ✅ |
 | 5 | **ChatGPT / OpenAI** | Página de estado (JSON) | ✅ |
-| 6 | **GitHub Copilot** | Página de estado (JSON) | ✅ |
-| 7 | **Telefónica / Movistar** | Botón manual | ❌ |
-| 8 | **Vodafone** | Botón manual | ❌ |
-| 9 | **Suministro eléctrico** | Botón manual | ❌ |
+| 6 | **GitHub** (repositorios, Actions, pull requests) | Página de estado (JSON) | ✅ |
+| 7 | **GitHub Copilot** | La misma página, otro componente | ✅ |
+| 8 | **Telefónica / Movistar** | Botón manual | ❌ |
+| 9 | **Vodafone** | Botón manual | ❌ |
+| 10 | **Suministro eléctrico** | Botón manual | ❌ |
 
-Añadir un servicio más que tenga página de estado pública es **una línea de configuración**,
-no desarrollo. Añadir uno que no la tenga es otro botón manual.
+GitHub y Copilot salen de la **misma** página de estado, filtrando por componente: son dos
+luces independientes con una sola petición. Añadir un servicio más que tenga página de
+estado pública es **una línea de configuración**, no desarrollo. Añadir uno que no la tenga es otro botón manual.
 
 ## Lo que NO se construye
 

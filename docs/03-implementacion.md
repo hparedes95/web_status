@@ -72,13 +72,16 @@ Una sola regla, deliberadamente estrecha:
 |---|---|---|
 | 1 | Verificar las fuentes con `./scripts/check-sources.sh` y corregir `02-fuentes.md` | 0,25 |
 | 2 | Esqueleto: FastAPI, SQLite, carga de `services.yaml`, poller | 1 |
-| 3 | Adaptador Statuspage → Claude, ChatGPT, Copilot | 0,5 |
+| 3 | Adaptador Statuspage → Claude, ChatGPT, GitHub, Copilot | 0,5 |
 | 4 | Adaptadores RSS y JSON → Azure, AWS, Microsoft 365 | 1 |
 | 5 | Pantalla: rejilla de luces, antigüedad del dato, enlace a la página oficial | 1 |
 | 6 | Botón de estado manual, con autor y hora | 0,5 |
 | 7 | Alerta a Teams con las reglas de arriba | 0,5 |
 | 8 | Docker y despliegue | 0,5 |
 |  | **Total** | **~5 días** |
+
+GitHub y Copilot no suman días: comparten fuente y adaptador con el resto del grupo, y el
+filtrado por componente ya estaba previsto para Copilot.
 
 Si Microsoft 365 acaba yendo por Microsoft Graph (opción B de [`02-fuentes.md`](02-fuentes.md)),
 sumar 1 día y el trámite del permiso.

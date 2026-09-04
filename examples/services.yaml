@@ -1,4 +1,4 @@
-# Los nueve indicadores del panel. Añadir uno nuevo con página de estado pública
+# Los diez indicadores del panel. Añadir uno nuevo con página de estado pública
 # es añadir un bloque aquí, no desarrollar.
 #
 # tipos de fuente:
@@ -60,13 +60,22 @@ servicios:
       tipo: statuspage
       url: "https://status.openai.com"
 
+  - id: github
+    nombre: "GitHub"
+    detalle: "Repositorios, Actions, pull requests"
+    alerta: false
+    fuente:
+      tipo: statuspage
+      url: "https://www.githubstatus.com"
+      componentes: ["Git Operations", "API Requests", "Actions", "Pull Requests"]
+
   - id: copilot
     nombre: "GitHub Copilot"
     alerta: false
     fuente:
       tipo: statuspage
-      url: "https://www.githubstatus.com"
-      componentes: ["Copilot"]       # que no se ponga rojo si falla GitHub Pages
+      url: "https://www.githubstatus.com"     # misma peticion que el bloque anterior
+      componentes: ["Copilot"]                # separados: una averia de Copilot no apaga GitHub
 
   # ───────── Sin API: botón manual ─────────
   # Nadie publica esto en formato consultable. Si nadie pulsa el botón,
