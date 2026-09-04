@@ -5,7 +5,9 @@
 """
 
 import json
+import shutil
 import sys
+import tempfile
 from datetime import timedelta
 from pathlib import Path
 
@@ -106,11 +108,11 @@ poller.pedir = explotar
 enviados = []
 poller.avisar = lambda texto: enviados.append(texto) or True
 
-raiz = Path(__file__).resolve().parent.parent
-poller.SALIDA = raiz / "site" / "status.json"
-poller.ESTADO = raiz / "estado.json"
-if poller.ESTADO.exists():
-    poller.ESTADO.unlink()
+# Las pruebas escriben en un directorio temporal: nunca sobre site/status.json
+# ni sobre estado.json reales, que son ficheros versionados del proyecto.
+temporal = Path(tempfile.mkdtemp(prefix="web-status-test-"))
+poller.SALIDA = temporal / "status.json"
+poller.ESTADO = temporal / "estado.json"
 
 comprobar(poller.main() == 0, "el ciclo termina sin errores aunque no haya red")
 salida = json.loads(poller.SALIDA.read_text())
@@ -150,8 +152,7 @@ siguiente = ciclo_con("operativo")
 comprobar(siguiente == [], "ya recuperado: silencio")
 
 # ── Limpieza y resultado ─────────────────────────────────────────────────
-poller.ESTADO.unlink(missing_ok=True)
-poller.SALIDA.unlink(missing_ok=True)
+shutil.rmtree(temporal, ignore_errors=True)
 
 print()
 if fallos:
