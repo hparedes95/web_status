@@ -1,0 +1,95 @@
+{
+  "dia": "2026-09-04",
+  "servicios": {
+    "microsoft-365": {
+      "estado": "desconocido",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": "2026-09-04T10:56:35Z",
+      "horas": "u",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "azure": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "aws": {
+      "estado": "desconocido",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": "2026-09-04T10:56:35Z",
+      "horas": "u",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "claude": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "chatgpt": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "github": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "copilot": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "telefonica": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "vodafone": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    },
+    "energia": {
+      "estado": "operativo",
+      "desde": "2026-09-04T10:56:35Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T10:00:00Z"
+    }
+  }
+}
