@@ -1,40 +1,33 @@
 # 03 — Implementación
 
+Está construido. Este documento describe cómo funciona lo que hay en el repositorio.
+
 ## Cómo funciona
 
-Un único proceso. No hay agentes, ni colas, ni servidor de base de datos.
+No hay servidor. Todo vive dentro de GitHub.
 
 ```
-  Feeds de los proveedores
-           │  (cada 2 min)
-           ▼
-   ┌───────────────────┐
-   │  Poller           │  lee, normaliza y guarda solo los CAMBIOS de estado
-   ├───────────────────┤
-   │  SQLite           │  un fichero
-   ├───────────────────┤
-   │  Web + API        │  la pantalla, con autorefresco
-   ├───────────────────┤
-   │  Alerta           │  webhook a Teams cuando algo pasa a rojo
-   └───────────────────┘
-           ▲
-           │  botón manual (telefonía, energía)
-        persona
+   GitHub Actions (cada 10 min)                    GitHub Pages
+   ┌────────────────────────────┐                 ┌──────────────────┐
+   │ src/poller.py              │                 │ site/index.html  │
+   │  1. lee las fuentes        │ ── despliega ──▶│ site/status.json │◀── navegador
+   │  2. escribe status.json    │                 └──────────────────┘
+   │  3. avisa por Telegram     │
+   │  4. commit de estado.json  │
+   └────────────────────────────┘
+              ▲
+              │ lee las incidencias marcadas a mano
+     Issues con etiqueta `caida:<id>`
 ```
 
-**Alojarlo fuera de la red que vigila** (VPS de ~5 €/mes o el contenedor que ya se use).
-Si vive en la oficina, se cae justo el día que hace falta.
-
-## Pila
-
-| Capa | Elección |
+| Fichero | Qué hace |
 |---|---|
-| Lenguaje | Python 3.12 con `httpx` y `feedparser` |
-| Web y API | FastAPI |
-| Planificación | APScheduler, en el mismo proceso |
-| Datos | SQLite |
-| Pantalla | HTML + HTMX, sin framework |
-| Despliegue | Un contenedor Docker |
+| `services.yaml` | Los 10 indicadores y la regla de alerta. Añadir uno es editar aquí |
+| `src/poller.py` | Lee las fuentes, normaliza, decide alertas y genera `site/status.json` |
+| `site/index.html` | El panel. Página estática que recarga `status.json` cada minuto |
+| `estado.json` | Estado anterior de cada servicio, para detectar transiciones. Lo escribe el workflow |
+| `.github/workflows/status.yml` | El cron, el despliegue a Pages y el commit |
+| `tests/test_poller.py` | Pruebas sin red: `python tests/test_poller.py` |
 
 ## Estados
 
@@ -43,51 +36,71 @@ Cada proveedor nombra sus averías a su manera; el adaptador traduce a cuatro:
 | Estado | Color | Significa |
 |---|---|---|
 | `operativo` | 🟢 | Nada que reportar |
-| `degradado` | 🟡 | Problema parcial o rendimiento degradado |
+| `degradado` | 🟡 | Problema parcial, rendimiento degradado o mantenimiento |
 | `caido` | 🔴 | Caída declarada |
 | `desconocido` | ⚪ | No se pudo leer la fuente |
 
-`desconocido` **se pinta en pantalla**, y cada tarjeta muestra la antigüedad del dato
-(«hace 2 min»). Un adaptador roto en silencio que deja todo en verde es el único fallo
-grave que puede tener un sistema así.
+Dos decisiones deliberadas:
+
+- **`desconocido` se pinta en pantalla**, y cada tarjeta muestra desde cuándo. Un adaptador
+  roto en silencio que deja todo en verde es el único fallo grave que puede tener un panel
+  así, y por eso ningún camino del código devuelve `operativo` sin haber leído la fuente.
+- **Ningún adaptador lanza excepción.** Si una fuente falla, esa luz se pone en blanco y el
+  resto del ciclo continúa.
+
+## Adaptadores
+
+| Tipo | Sirve para | Cómo decide |
+|---|---|---|
+| `statuspage` | Claude, ChatGPT, GitHub, Copilot | `/api/v2/summary.json`. Con `componentes`, filtra y se queda con el peor; sin ellos, usa el indicador global |
+| `rss` | Azure, Microsoft 365 | Un RSS publica *eventos*, no estado. Si hay entradas recientes que mencionen nuestras regiones → `degradado`. Es una señal gruesa, y por eso el panel siempre enlaza a la página oficial |
+| `json` | AWS | Health Dashboard público. Formato no documentado como API estable, así que se lee de forma defensiva: lo que no encaje devuelve `desconocido` |
+| `manual` | Telefónica, Vodafone, energía | Issues abiertas con la etiqueta `caida:<id>` |
+
+GitHub y GitHub Copilot salen de **la misma petición**, filtrando por componente: dos luces
+independientes, para que una avería de Copilot no apague la luz de GitHub ni al revés.
+
+## El estado manual
+
+Para encender una de las tres luces sin feed, se abre una issue con la etiqueta
+`caida:telefonica`, `caida:vodafone` o `caida:energia`. Al cerrarla, la luz vuelve a verde.
+
+- El autor y la hora salen de la propia issue: el panel muestra «marcado por @alguien».
+- El workflow también se dispara al abrir, cerrar o etiquetar una issue, así que **el panel
+  se actualiza al momento**, sin esperar al siguiente ciclo.
+- En un repositorio público cualquiera puede abrir una issue, pero **solo quien tiene
+  permiso de escritura puede poner etiquetas**. Nadie de fuera puede encender una luz.
 
 ## La alerta
 
-Una sola regla, deliberadamente estrecha:
+Por Telegram, con una sola regla deliberadamente estrecha:
 
-- Se avisa **al pasar a rojo**, nunca al pasar a amarillo.
-- **Antirrebote:** hacen falta dos lecturas seguidas en rojo (unos 4 minutos) para evitar
-  avisar de un fallo puntual de red.
+- Se avisa **al pasar a `caido`**, nunca a `degradado`, `mantenimiento` ni `desconocido`.
+- **Antirrebote:** hacen falta dos lecturas seguidas en rojo (~20 min) antes de avisar.
 - **Un aviso por incidencia**, no uno por ciclo.
-- **Aviso de recuperación**, con la duración: «Azure operativo tras 34 min».
-- **No se avisa** de mantenimientos programados ni de `desconocido`.
-- Canal: webhook entrante de Teams. Correo SMTP como alternativa.
+- **Aviso de recuperación** con la duración: «🟢 Azure operativo tras 34 min».
+- Solo para los servicios con `alerta: true` en `services.yaml`. Hoy: Microsoft 365, Azure
+  y AWS.
 
-> Ampliar esto es fácil; recuperar la atención de un canal que la gente ha silenciado, no.
-> Si en un mes alguien echa algo en falta, se añade.
+Las credenciales (`TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`) van en los secretos del
+repositorio. **Nunca en el código: el repositorio es público.**
 
-## Tareas
+> Ampliar las alertas es cambiar un `false` por un `true`. Recuperar la atención de un
+> canal que la gente ya ha silenciado, no. Si en un mes alguien echa algo en falta, se añade.
 
-| # | Tarea | Días |
-|---|---|---|
-| 1 | Verificar las fuentes con `./scripts/check-sources.sh` y corregir `02-fuentes.md` | 0,25 |
-| 2 | Esqueleto: FastAPI, SQLite, carga de `services.yaml`, poller | 1 |
-| 3 | Adaptador Statuspage → Claude, ChatGPT, GitHub, Copilot | 0,5 |
-| 4 | Adaptadores RSS y JSON → Azure, AWS, Microsoft 365 | 1 |
-| 5 | Pantalla: rejilla de luces, antigüedad del dato, enlace a la página oficial | 1 |
-| 6 | Botón de estado manual, con autor y hora | 0,5 |
-| 7 | Alerta a Teams con las reglas de arriba | 0,5 |
-| 8 | Docker y despliegue | 0,5 |
-|  | **Total** | **~5 días** |
+## Detalles del ciclo
 
-GitHub y Copilot no suman días: comparten fuente y adaptador con el resto del grupo, y el
-filtrado por componente ya estaba previsto para Copilot.
-
-Si Microsoft 365 acaba yendo por Microsoft Graph (opción B de [`02-fuentes.md`](02-fuentes.md)),
-sumar 1 día y el trámite del permiso.
+- **Cadencia: cada 10 minutos.** El cron de Actions no es puntual —con carga se retrasa—,
+  así que la cadencia real es de 10 a 20 min. Los minutos son gratis porque el repositorio
+  es público; si algún día pasa a privado, hay que subir el intervalo a 30 min para caber
+  en el plan gratuito.
+- **`estado.json` se commitea solo cuando cambia algo**, más una vez al día. Ese commit
+  diario no es decorativo: GitHub desactiva los workflows programados tras 60 días sin
+  actividad en el repositorio.
+- El `concurrency` del workflow evita que dos ciclos se pisen al escribir o al desplegar.
 
 ## Mantenimiento
 
-**1–2 h/mes.** Los proveedores cambian sus feeds sin avisar. Cada adaptador degrada a
-`desconocido` en lugar de tumbar el proceso, y esa luz blanca es la señal de que algo hay
-que arreglar. Conviene que alguien tenga esa media hora reconocida en su carga.
+**1–2 h/mes.** Los proveedores cambian sus feeds sin avisar. Cuando eso pasa, la luz se
+pone en blanco (`desconocido`) en lugar de mentir: esa es la señal de que hay que mirar el
+adaptador. Conviene que alguien tenga esa media hora reconocida en su carga.

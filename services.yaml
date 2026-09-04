@@ -8,7 +8,10 @@
 #   graph       Microsoft Graph (solo si se elige la opción B de docs/02-fuentes.md)
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
-# alerta: true -> se avisa al pasar a rojo. Ver la regla en docs/03-implementacion.md
+# alerta: true -> se avisa por Telegram al pasar a rojo. Regla en docs/03-implementacion.md
+#
+# Los servicios `manual` se encienden abriendo una issue con la etiqueta
+# caida:<id> y se apagan al cerrarla.
 
 servicios:
 
@@ -102,8 +105,12 @@ servicios:
 
 # ───────── Alerta ─────────
 alerta:
-  canal: teams
-  webhook_env: TEAMS_WEBHOOK_URL     # nunca la URL en el repositorio
-  lecturas_para_avisar: 2            # antirrebote: ~4 min en rojo antes de avisar
-  avisar_recuperacion: true          # "Azure operativo tras 34 min"
-  ignorar: ["mantenimiento", "desconocido"]
+  canal: telegram
+  # Las credenciales van en los secretos del repositorio, NUNCA aquí:
+  # Ajustes > Secrets and variables > Actions
+  #   TELEGRAM_BOT_TOKEN  el que da @BotFather al crear el bot
+  #   TELEGRAM_CHAT_ID    el chat o grupo donde escribe el bot
+  lecturas_para_avisar: 2      # antirrebote: ~20 min en rojo antes de avisar
+  avisar_recuperacion: true    # "Azure operativo tras 34 min"
+  # Solo se avisa al pasar a `caido`. Degradado, mantenimiento y fuentes
+  # ilegibles se ven en el panel pero no mandan mensaje.

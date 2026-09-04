@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estado de servicios</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🚦</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --ground:#EEF1F4; --surface:#FFFFFF; --sunk:#E4E9EE;
+    --ink:#16212B; --muted:#5D6C7B; --line:#D3DBE2; --line-soft:#E3E9EE;
+    --accent:#125C74;
+    --ok:#2F7D5A; --warn:#9A7016; --crit:#A53326; --unk:#78848F;
+    --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --ground:#0F151B; --surface:#18212A; --sunk:#131C24;
+      --ink:#E5EBF1; --muted:#95A3B0; --line:#2A353F; --line-soft:#222C35;
+      --accent:#6FBED6;
+      --ok:#5FBB8B; --warn:#D2A63F; --crit:#E4705F; --unk:#8B97A3;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--ground);color:var(--ink);font-family:var(--body);
+    font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 64px}
+
+  header{padding:36px 0 22px;border-bottom:2px solid var(--ink);
+    display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+  .titulo h1{font-family:var(--display);font-weight:700;font-size:1.9rem;margin:0;letter-spacing:-.02em}
+  .titulo p{margin:4px 0 0;color:var(--muted);font-size:.94rem}
+  .resumen{text-align:right}
+  #titular{font-family:var(--display);font-weight:600;font-size:1.15rem;margin:0}
+  #frescura{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin:4px 0 0}
+
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;
+    background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:26px}
+  /* La separación es el hueco de 1px; el recuadro de cada tarjeta lo pinta su sombra,
+     así los huecos que sobran en la última fila quedan del color del panel y no grises. */
+  .tarjeta{background:var(--surface);box-shadow:0 0 0 1px var(--line);
+    padding:16px 18px;display:flex;flex-direction:column;gap:5px;min-height:104px}
+  .tarjeta.mala{background:color-mix(in srgb,var(--crit) 7%,var(--surface))}
+  .cab{display:flex;align-items:center;gap:9px}
+  .luz{width:11px;height:11px;border-radius:50%;flex:none}
+  .e-operativo{background:var(--ok)}
+  .e-degradado{background:var(--warn)}
+  .e-caido{background:var(--crit)}
+  .e-desconocido{background:var(--unk)}
+  .nombre{font-family:var(--display);font-weight:600;font-size:1.04rem;letter-spacing:-.005em}
+  .etiqueta{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);border:1px solid var(--line);
+    border-radius:2px;padding:2px 5px}
+  .mensaje{font-size:.89rem;color:var(--muted);line-height:1.42;
+    overflow-wrap:anywhere;flex:1}
+  .pie{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--muted)}
+  .pie a{color:var(--accent);text-decoration:none}
+  .pie a:hover,.pie a:focus-visible{text-decoration:underline}
+
+  .leyenda{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:18px;font-size:.88rem;color:var(--muted)}
+  .leyenda span{display:flex;align-items:center;gap:8px}
+
+  .aviso{margin-top:22px;border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:3px;background:var(--surface);padding:16px 20px;font-size:.92rem;color:var(--muted)}
+  .aviso strong{color:var(--ink);font-weight:600}
+  .aviso code{font-family:var(--mono);font-size:.85em;background:var(--sunk);
+    padding:.1em .38em;border-radius:3px;border:1px solid var(--line-soft)}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:.85rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 24px}
+  footer a{color:var(--accent)}
+  @media (max-width:600px){
+    header{flex-direction:column;align-items:flex-start}
+    .resumen{text-align:left}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="titulo">
+      <h1>Estado de servicios</h1>
+      <p>Proveedores de los que dependemos, en una pantalla</p>
+    </div>
+    <div class="resumen">
+      <p id="titular">Cargando…</p>
+      <p id="frescura">—</p>
+    </div>
+  </header>
+
+  <div id="rejilla" class="rejilla"></div>
+
+  <div class="leyenda">
+    <span><i class="luz e-operativo"></i>Operativo</span>
+    <span><i class="luz e-degradado"></i>Degradado o mantenimiento</span>
+    <span><i class="luz e-caido"></i>Caído</span>
+    <span><i class="luz e-desconocido"></i>No se pudo leer la fuente</span>
+  </div>
+
+  <div class="aviso">
+    <strong>Telefonía y energía no se detectan solas.</strong> No existe API de operadoras
+    ni de distribuidoras eléctricas: esas luces solo se encienden si alguien las marca.
+    Para hacerlo, abre una issue en el repositorio con la etiqueta <code>caida:vodafone</code>
+    (o <code>caida:telefonica</code>, <code>caida:energia</code>) y ciérrala cuando se
+    resuelva. El panel se actualiza al momento.
+  </div>
+
+  <footer>
+    <span id="generado">—</span>
+    <span><a href="https://github.com/hparedes95/web_status">Repositorio y documentación</a></span>
+    <span><a href="https://github.com/hparedes95/web_status/issues">Marcar una avería</a></span>
+  </footer>
+
+</div>
+
+<script>
+const ESTADOS = {
+  operativo:   {texto: "Operativo"},
+  degradado:   {texto: "Degradado"},
+  caido:       {texto: "Caído"},
+  desconocido: {texto: "Sin datos"}
+};
+
+function hace(iso) {
+  if (!iso) return "";
+  const minutos = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (minutos < 1) return "hace menos de 1 min";
+  if (minutos < 60) return `hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  return `hace ${Math.floor(horas / 24)} d`;
+}
+
+function tarjeta(s) {
+  const el = document.createElement("div");
+  el.className = "tarjeta" + (s.estado === "caido" ? " mala" : "");
+
+  const cab = document.createElement("div");
+  cab.className = "cab";
+  const luz = document.createElement("i");
+  luz.className = "luz e-" + s.estado;
+  const nombre = document.createElement("span");
+  nombre.className = "nombre";
+  nombre.textContent = s.nombre;
+  cab.append(luz, nombre);
+  if (s.manual) {
+    const et = document.createElement("span");
+    et.className = "etiqueta";
+    et.textContent = "manual";
+    cab.append(et);
+  }
+
+  const mensaje = document.createElement("p");
+  mensaje.className = "mensaje";
+  mensaje.textContent = s.mensaje || s.detalle || "";
+
+  const pie = document.createElement("div");
+  pie.className = "pie";
+  const estado = document.createElement("span");
+  estado.textContent = (ESTADOS[s.estado] || {texto: s.estado}).texto
+    + (s.estado !== "operativo" && s.desde ? " · " + hace(s.desde) : "");
+  pie.append(estado);
+  if (s.url) {
+    const a = document.createElement("a");
+    a.href = s.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = s.manual ? "ver issue" : "página oficial";
+    pie.append(a);
+  }
+
+  el.append(cab, mensaje, pie);
+  return el;
+}
+
+function pintar(datos) {
+  const rejilla = document.getElementById("rejilla");
+  rejilla.replaceChildren(...datos.servicios.map(tarjeta));
+
+  // Nunca decir "todo operativo" cuando en realidad no se ha podido comprobar:
+  // un panel en verde por no haber leído las fuentes es peor que no tener panel.
+  const cuenta = e => datos.servicios.filter(s => s.estado === e).length;
+  const titular = document.getElementById("titular");
+  const caidos = cuenta("caido"), degradados = cuenta("degradado"), sinDatos = cuenta("desconocido");
+
+  if (caidos) {
+    titular.textContent = caidos === 1 ? "1 servicio caído" : `${caidos} servicios caídos`;
+    titular.style.color = "var(--crit)";
+  } else if (degradados) {
+    titular.textContent = degradados === 1 ? "1 degradado" : `${degradados} degradados`;
+    titular.style.color = "var(--warn)";
+  } else if (sinDatos) {
+    titular.textContent = sinDatos === datos.servicios.length
+      ? "Sin datos" : `${sinDatos} sin datos`;
+    titular.style.color = "var(--unk)";
+  } else {
+    titular.textContent = "Todo operativo";
+    titular.style.color = "var(--ok)";
+  }
+
+  document.getElementById("frescura").textContent = "Comprobado " + hace(datos.generado_en);
+  document.getElementById("generado").textContent =
+    "Última comprobación: " + new Date(datos.generado_en).toLocaleString("es-ES");
+}
+
+async function cargar() {
+  try {
+    const r = await fetch("status.json?t=" + Date.now(), {cache: "no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    pintar(await r.json());
+  } catch (e) {
+    document.getElementById("titular").textContent = "No se pudo cargar el estado";
+    document.getElementById("frescura").textContent = String(e.message || e);
+  }
+}
+
+cargar();
+setInterval(cargar, 60000);
+</script>
+</body>
+</html>

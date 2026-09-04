@@ -2,8 +2,11 @@
 
 Una página con **una luz por servicio** y **una alerta cuando alguna se pone en rojo**.
 
-> **Estado: planificación.** Este repositorio contiene el alcance y el plan. Todavía no hay
-> código de aplicación.
+**Panel:** https://hparedes95.github.io/web_status/ · **Avisos:** Telegram
+
+> **Estado: construido, pendiente de puesta en marcha.** Faltan cinco pasos de
+> configuración que solo puede dar el dueño del repositorio: ver
+> [04 — Puesta en marcha](docs/04-arranque.md).
 
 ## Qué vigila
 
@@ -23,19 +26,31 @@ avería con el operador y la marca, el resto deja de llamar al mismo soporte.
 |---|---|
 | [01 — Alcance](docs/01-alcance.md) | Qué entra, qué no, y las tres limitaciones que hay que asumir |
 | [02 — Fuentes](docs/02-fuentes.md) | De dónde sale cada dato y la decisión pendiente sobre Microsoft 365 |
-| [03 — Implementación](docs/03-implementacion.md) | Cómo funciona, la regla de la alerta y las tareas |
-| [04 — Arranque](docs/04-arranque.md) | Qué hace falta para empezar y dónde alojarlo (GitHub o VPS) |
+| [03 — Implementación](docs/03-implementacion.md) | Cómo funciona por dentro: adaptadores, estados y la regla de la alerta |
+| [04 — Puesta en marcha](docs/04-arranque.md) | Los cinco pasos que faltan: bot de Telegram, secretos, Pages, etiquetas y primer ciclo |
 | [referencia/](docs/referencia/) | Análisis previo, con un alcance más amplio que se descartó |
 
-## Antes de escribir código
+## Cómo funciona
+
+Sin servidor: un workflow de GitHub Actions lee las fuentes cada 10 minutos, publica el
+panel en GitHub Pages y avisa por Telegram cuando algo se cae. Las tres luces sin API
+(telefonía y energía) se encienden abriendo una issue con la etiqueta `caida:<id>`.
+
+Detalle en [03 — Implementación](docs/03-implementacion.md).
+
+## Desarrollo
 
 ```bash
-./scripts/check-sources.sh
+pip install -r requirements.txt
+python tests/test_poller.py      # pruebas, sin red
+python src/poller.py             # un ciclo completo, escribe site/status.json
+./scripts/check-sources.sh       # ¿qué fuentes responden hoy?
 ```
 
-Comprueba cuáles de las fuentes responden hoy. Es la tarea 1 del plan y la condición para
-dar por buena la estimación de 5 días.
+Para ver el panel en local: `python -m http.server -d site` y abrir
+<http://localhost:8000>.
 
-## Esfuerzo
+## Mantenimiento
 
-**4–6 días persona**, más 1–2 h/mes de mantenimiento.
+**1–2 h/mes.** Los proveedores cambian sus feeds sin avisar; cuando pasa, esa luz se pone
+en blanco (`desconocido`) en lugar de mentir.

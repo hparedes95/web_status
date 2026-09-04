@@ -1,0 +1,72 @@
+name: Estado de servicios
+
+on:
+  schedule:
+    # Cada 10 minutos. Actions no es puntual: con carga puede retrasarse bastante,
+    # así que la cadencia real es de 10-20 min. Los minutos son gratis porque el
+    # repositorio es público; si algún día pasa a privado, subir el intervalo a 30.
+    - cron: "*/10 * * * *"
+  # Al abrir, cerrar o etiquetar una issue `caida:*` el panel se actualiza al momento
+  # en vez de esperar al siguiente ciclo.
+  issues:
+    types: [opened, closed, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit de estado.json
+  issues: read      # leer las incidencias marcadas a mano
+  pages: write      # publicar el panel
+  id-token: write   # requerido por deploy-pages
+
+# Que dos ciclos no se pisen al escribir estado.json ni al desplegar.
+concurrency:
+  group: estado-servicios
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.desplegar.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Leer el estado de los proveedores
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python src/poller.py
+
+      - name: Guardar el estado si ha cambiado
+        run: |
+          if [ -n "$(git status --porcelain estado.json)" ]; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add estado.json
+            git commit -m "Estado: $(date -u '+%Y-%m-%d %H:%M UTC')"
+            # Otro ciclo puede haber empujado mientras tanto.
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          else
+            echo "Sin cambios de estado."
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: desplegar
+        uses: actions/deploy-pages@v4

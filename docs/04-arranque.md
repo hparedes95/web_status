@@ -1,88 +1,87 @@
-# 04 — Qué hace falta para empezar
+# 04 — Puesta en marcha
 
-## Lista de arranque
+El código está listo. Faltan cinco cosas que solo puedes hacer tú, porque requieren acceso
+a la configuración del repositorio o a cuentas.
 
-Seis puntos. Los dos primeros bloquean; el resto se puede resolver sobre la marcha.
+## 1. Crear el bot de Telegram
 
-| # | Qué | Quién | Bloquea |
-|---|---|---|---|
-| 1 | **Ejecutar `./scripts/check-sources.sh`** y anotar qué responde | Cualquiera con salida a internet | Sí — la estimación no vale hasta saber esto |
-| 2 | **Decidir dónde se aloja** (ver abajo) | Tú | Sí — cambia cómo se construye |
-| 3 | **Decidir Microsoft 365**: feed público o Microsoft Graph | Tú | No, pero si es Graph hay que pedir el permiso ya |
-| 4 | **Crear el webhook entrante de Teams** en el canal que reciba los avisos | Quien administre el canal | No, se añade al final |
-| 5 | **Confirmar las regiones** de Azure y AWS que os afectan | Sistemas | No, hay un valor por defecto |
-| 6 | **Asignar quién lo mantiene** (1–2 h/mes) | Tú | No, pero sin dueño el panel deja de ser fiable en unos meses |
+1. Habla con **@BotFather** en Telegram → `/newbot` → te da un **token**.
+2. Escribe algo al bot (o añádelo al grupo donde queráis los avisos).
+3. Saca el **chat id**: abre `https://api.telegram.org/bot<TOKEN>/getUpdates` y busca
+   `"chat":{"id":...}`. En un grupo el id es negativo, con el signo incluido.
 
-Nada de esto es trabajo de desarrollo: es media mañana de decisiones. El punto 1 es el
-único que puede cambiar el plan, porque si alguna fuente resulta no existir hay que buscar
-alternativa.
+> Si el bot va a escribir en un grupo, tiene que ser miembro. Y si el grupo tiene el modo
+> de privacidad activado, dale permiso de administrador o desactiva la privacidad con
+> `/setprivacy` en BotFather.
 
-## La decisión de alojamiento
+## 2. Guardar los secretos
 
-Sí, **se puede construir y alojar entero dentro de GitHub**, sin servidor. Son dos
-arquitecturas distintas y la elección condiciona el resto.
+**Ajustes del repositorio → Secrets and variables → Actions → New repository secret**
 
-### Opción A — Todo en GitHub
-
-```
-  GitHub Actions (cron)                     GitHub Pages
-  ┌──────────────────────┐                 ┌─────────────────┐
-  │ 1. lee los feeds     │                 │ index.html      │
-  │ 2. escribe status.json│ ──── commit ──▶ │ status.json     │ ◀── navegador
-  │ 3. avisa a Teams     │                 └─────────────────┘
-  └──────────────────────┘
-            ▲
-            │  lee las incidencias manuales
-      GitHub Issues con etiqueta `caida:*`
-```
-
-- **El panel** es una página estática que lee `status.json`. Sin servidor, sin base de datos.
-- **El histórico** sale gratis: cada ejecución hace *commit*, y el historial de git *es* el
-  registro de cambios.
-- **El botón manual** se sustituye por **issues etiquetadas**: alguien abre una issue con la
-  etiqueta `caida:vodafone` y esa luz se pone en rojo; al cerrarla, vuelve a verde. El autor
-  y la hora vienen dados, se puede hacer desde el móvil y queda el hilo de conversación.
-- **La alerta** la manda el propio workflow al webhook de Teams, con la URL en los secretos
-  del repositorio.
-
-**Lo que hay que saber antes de elegirla** (verificar los tres puntos, son condiciones de
-GitHub que cambian con el tiempo y con vuestro plan):
-
-| Límite | Consecuencia |
+| Nombre | Valor |
 |---|---|
-| **El cron de Actions no es puntual.** El intervalo mínimo es de 5 min y las ejecuciones se retrasan cuando hay carga | El retardo de detección pasa de ~2 min a **10–20 min**, que se suman a los 10–45 min que tarda el proveedor en reconocer la caída |
-| **Minutos de Actions en repositorio privado.** El plan gratuito da 2.000 min/mes y se factura redondeando al minuto por ejecución | Una ejecución cada 30 min ≈ 1.440 min/mes y cabe. Cada 15 min ≈ 2.880 min/mes y **no cabe** en el plan gratuito |
-| **GitHub Pages en repositorio privado publica un sitio público**, salvo con Enterprise Cloud | El panel sería visible desde internet: no muestra datos internos, pero sí **qué proveedores usáis** |
-| **Los workflows programados se desactivan solos tras 60 días sin actividad** en el repositorio | Hay que comprobar si los *commits* del propio workflow cuentan como actividad; si no, se desactivaría solo |
+| `TELEGRAM_BOT_TOKEN` | El token de BotFather |
+| `TELEGRAM_CHAT_ID` | El id del chat o grupo |
 
-### Opción B — Un contenedor en un VPS
+⚠️ **El repositorio es público.** Estos valores no pueden acabar en ningún fichero, ni
+siquiera en un ejemplo. El código los lee solo de las variables de entorno.
 
-Lo del plan original: un proceso con su poller, su SQLite y su página.
+## 3. Activar GitHub Pages
 
-| | **A · GitHub** | **B · VPS** |
-|---|---|---|
-| Coste | 0 € | ~5 €/mes |
-| Servidor que mantener | Ninguno | Uno |
-| Cadencia realista | 15–30 min | 2 min |
-| Privacidad del panel | Público (salvo Enterprise) | Privado |
-| Estado manual | Issues etiquetadas | Un botón |
-| Trabajo | ~4,5 días | ~5 días |
-| Fuera de nuestra red | ✅ | ✅ |
+**Ajustes del repositorio → Pages → Source: GitHub Actions**
 
-### Recomendación
+No hace falta elegir rama: el propio workflow publica el contenido de `site/`. La URL
+quedará en `https://hparedes95.github.io/web_status/`.
 
-**Si el panel puede ser público, opción A.** No muestra nada confidencial —son estados de
-proveedores que ya son públicos uno a uno— y a cambio elimina el servidor, el coste y el
-despliegue. La cadencia de 15–30 min es aceptable porque el cuello de botella real no es el
-sondeo, sino que el proveedor tarda hasta 45 min en reconocer la avería.
+> Al ser un repositorio público, **la página será visible desde internet**. No muestra
+> datos internos —son estados de proveedores que ya son públicos uno a uno—, pero sí deja
+> ver qué proveedores usáis y el nombre de quien marque una avería manual.
 
-**Si tiene que ser privado, opción B.** Cinco euros al mes y control total.
+## 4. Crear las tres etiquetas
 
-Lo que sí desaconsejo es empezar por B «por si acaso»: A se monta en menos tiempo y, si
-algún día no llega, migrar el poller a un contenedor es reaprovechar casi todo el código.
+**Issues → Labels → New label**, tres etiquetas con estos nombres exactos:
 
-## Y sí, el desarrollo también se lanza desde GitHub
+```
+caida:telefonica
+caida:vodafone
+caida:energia
+```
 
-Independientemente de dónde se aloje: el trabajo se hace en este repositorio, en la rama
-`claude/service-status-monitor-planner-un9nz5`, y se puede arrancar desde una issue o desde
-`claude.ai/code` apuntando aquí.
+Son las que encienden las luces sin feed. Solo quien tiene permiso de escritura puede
+aplicarlas, así que nadie de fuera puede tocar el panel.
+
+## 5. Lanzar el primer ciclo
+
+**Actions → Estado de servicios → Run workflow**
+
+Ese primer ciclo hace tres cosas a la vez: comprueba qué fuentes responden de verdad,
+publica la página y deja el estado inicial guardado.
+
+**Mira su salida con atención.** Cada línea dice qué devolvió cada fuente:
+
+```
+  microsoft-365    desconocido  La fuente respondió HTTP 404
+  azure            operativo    Sin avisos recientes
+  claude           operativo    All Systems Operational
+```
+
+Todo lo que salga `desconocido` es una URL que hay que corregir en `services.yaml`. Las
+URLs se escribieron sin poder verificarlas —el entorno donde se redactó el plan tenía
+bloqueada la salida a esos dominios—, así que **es de esperar que alguna falle en el primer
+intento**. Es exactamente lo que este ciclo sirve para descubrir.
+
+La más probable es **Microsoft 365**: su feed público es el menos fiable de los seis. Si
+falla, la alternativa es Microsoft Graph, que además da el estado de *vuestro* tenant en
+lugar del global. Requiere una aplicación en Entra ID con el permiso
+`ServiceHealth.Read.All` y consentimiento de administrador; el trámite depende de terceros,
+así que conviene pedirlo cuanto antes si se va por ahí.
+
+## Después
+
+| Qué | Dónde |
+|---|---|
+| Añadir un servicio con página de estado | `services.yaml`, un bloque más |
+| Activar la alerta de un servicio | `alerta: true` en `services.yaml` |
+| Cambiar la cadencia | El `cron` de `.github/workflows/status.yml` |
+| Marcar una avería de telefonía o luz | Abrir una issue con la etiqueta `caida:<id>` |
+| Probar cambios sin desplegar | `python tests/test_poller.py` |
