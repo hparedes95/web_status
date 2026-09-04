@@ -8,6 +8,7 @@ salida a internet.
     python scripts/probe.py URL [URL...]
 """
 
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -54,6 +55,19 @@ def sondear(url: str) -> None:
             print(f"      · {entrada.get('title', '')[:90]}")
     except ImportError:
         pass
+
+    # Si es HTML, casi siempre es una aplicación de una sola página: lo que
+    # interesa entonces no es el HTML sino de dónde saca sus datos.
+    if b"<!doctype html" in crudo[:200].lower() or b"<html" in crudo[:200].lower():
+        texto = crudo.decode("utf-8", errors="replace")
+        guiones = set(re.findall(r'src="([^"]+\.js[^"]*)"', texto))
+        if guiones:
+            print("   scripts que carga:")
+            for g in sorted(guiones)[:8]:
+                print(f"      {g}")
+        rutas = set(re.findall(r'["\'](/(?:api|data|status)/[A-Za-z0-9_\-./]*)["\']', texto))
+        if rutas:
+            print(f"   rutas candidatas en el HTML: {sorted(rutas)[:12]}")
 
 
 if __name__ == "__main__":
