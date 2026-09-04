@@ -7,8 +7,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": "2026-09-04T10:56:35Z",
-      "horas": "u",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "uu",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "azure": {
       "estado": "operativo",
@@ -16,17 +16,17 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "aws": {
-      "estado": "desconocido",
-      "desde": "2026-09-04T10:56:35Z",
+      "estado": "operativo",
+      "desde": "2026-09-04T11:00:23Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": "2026-09-04T10:56:35Z",
-      "horas": "u",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "roto_desde": null,
+      "horas": "uo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "claude": {
       "estado": "operativo",
@@ -34,8 +34,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "chatgpt": {
       "estado": "operativo",
@@ -43,8 +43,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "github": {
       "estado": "operativo",
@@ -52,8 +52,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "copilot": {
       "estado": "operativo",
@@ -61,8 +61,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "telefonica": {
       "estado": "operativo",
@@ -70,8 +70,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "vodafone": {
       "estado": "operativo",
@@ -79,8 +79,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     },
     "energia": {
       "estado": "operativo",
@@ -88,8 +88,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o",
-      "ultima_hora": "2026-09-04T10:00:00Z"
+      "horas": "oo",
+      "ultima_hora": "2026-09-04T11:00:00Z"
     }
   }
 }
