@@ -1,233 +1,100 @@
-# Inventario de servicios e indicadores — primera tanda recomendada.
-# Ver docs/07-indicadores.md para el catálogo completo y los que quedan fuera.
-#
-# criticidad: alta  -> ordena primero en el panel y puede generar alerta
-#             media -> se muestra, no alerta
-#             baja  -> se muestra al final
+# Los nueve indicadores del panel. Añadir uno nuevo con página de estado pública
+# es añadir un bloque aquí, no desarrollar.
 #
 # tipos de fuente:
-#   statuspage      JSON estándar /api/v2/summary.json
-#   rss             feed RSS/Atom
-#   json            JSON con formato propio del proveedor
-#   graph           Microsoft Graph, Service Health de nuestro tenant
-#   service_health  Azure Service Health de nuestra suscripción
-#   aws_health      AWS Health Dashboard
-#   sonda           medición activa desde el agente local o el recolector
-#   snmp            consulta SNMP (SAI, PDU, climatización)
-#   manual          alguien lo marca a mano; queda registrado quién y cuándo
+#   statuspage  JSON estándar en /api/v2/summary.json
+#   rss         feed RSS o Atom
+#   json        JSON con formato propio del proveedor
+#   graph       Microsoft Graph (solo si se elige la opción B de docs/02-fuentes.md)
+#   manual      alguien lo marca a mano; se guarda quién y cuándo
+#
+# alerta: true -> se avisa al pasar a rojo. Ver la regla en docs/03-implementacion.md
 
 servicios:
 
-  # ═══════════ PRIORIDAD 1 · Microsoft 365 ═══════════
-  # Un solo adaptador (graph) cubre todo el bloque. Requiere app en Entra ID
-  # con permiso de aplicación ServiceHealth.Read.All y consentimiento de admin.
+  # ───────── Microsoft ─────────
 
-  - id: entra-id
-    nombre: "Entra ID (identidad)"
-    categoria: microsoft
-    criticidad: alta
-    responsable: sistemas
-    nota: "Si cae, no se entra a nada. El indicador con más consecuencias del catálogo."
-    fuentes:
-      - tipo: graph
-        servicio: "Identity Service"
-      - tipo: sonda            # A10: login real, detecta antes que el feed
-        metodo: oauth_client_credentials
-        intervalo_s: 300
+  - id: microsoft-365
+    nombre: "Microsoft 365"
+    detalle: "Correo, Teams, SharePoint, Copilot"
+    alerta: true
+    fuente:
+      tipo: rss                      # opción A: público, sin credenciales
+      url: "https://status.cloud.microsoft/api/feed"
+      # opción B, si A no sirve: requiere app en Entra ID con ServiceHealth.Read.All
+      # tipo: graph
+      # servicios: ["Exchange Online", "Microsoft Teams", "SharePoint Online",
+      #             "Identity Service", "Microsoft 365 Copilot"]
 
-  - id: exchange-online
-    nombre: "Correo (Exchange Online)"
-    categoria: microsoft
-    criticidad: alta
-    responsable: sistemas
-    fuentes:
-      - tipo: graph
-        servicio: "Exchange Online"
+  - id: azure
+    nombre: "Azure"
+    alerta: true
+    fuente:
+      tipo: rss
+      url: "https://azure.status.microsoft/en-us/status/feed/"
+      regiones: ["West Europe", "North Europe"]   # sin filtro, una caída en Brasil nos pinta rojo
 
-  - id: teams
-    nombre: "Microsoft Teams"
-    categoria: microsoft
-    criticidad: alta
-    responsable: sistemas
-    fuentes:
-      - tipo: graph
-        servicio: "Microsoft Teams"
-
-  - id: sharepoint
-    nombre: "SharePoint y OneDrive"
-    categoria: microsoft
-    criticidad: alta
-    responsable: sistemas
-    fuentes:
-      - tipo: graph
-        servicios: ["SharePoint Online", "OneDrive for Business"]
-
-  - id: copilot-m365
-    nombre: "Microsoft 365 Copilot"
-    categoria: microsoft
-    criticidad: media
-    responsable: sistemas
-    fuentes:
-      - tipo: graph
-        servicio: "Microsoft 365 Copilot"
-
-  # ═══════════ PRIORIDAD 1 · Azure ═══════════
-
-  - id: azure-suscripcion
-    nombre: "Azure — nuestra suscripción"
-    categoria: cloud
-    criticidad: alta
-    responsable: sistemas
-    fuentes:
-      - tipo: service_health         # B2: incidencias que nos afectan
-        tipos_evento: ["ServiceIssue"]
-        regiones: ["westeurope", "northeurope"]
-      - tipo: rss                    # B1: respaldo público si falla lo anterior
-        url: "https://azure.status.microsoft/en-us/status/feed/"
-        regiones: ["West Europe", "North Europe"]
-
-  - id: azure-mantenimientos
-    nombre: "Azure — mantenimientos programados"
-    categoria: cloud
-    criticidad: media
-    responsable: sistemas
-    nota: "No es una caída: es el aviso de por qué se reiniciará la VM el martes."
-    fuentes:
-      - tipo: service_health
-        tipos_evento: ["PlannedMaintenance", "HealthAdvisory", "SecurityAdvisory"]
-
-  # ═══════════ PRIORIDAD 1 · AWS ═══════════
+  # ───────── AWS ─────────
 
   - id: aws
     nombre: "AWS"
-    categoria: cloud
-    criticidad: alta
-    responsable: sistemas
-    nota: "aws_health (nuestra cuenta) exige soporte Business o Enterprise. Verificar."
-    fuentes:
-      - tipo: aws_health
-        regiones: ["eu-west-1", "eu-south-2"]
-        servicios: ["EC2", "S3", "RDS"]
+    alerta: true
+    fuente:
+      tipo: json
+      url: "https://health.aws.amazon.com/public/currentevents"
+      regiones: ["eu-west-1", "eu-south-2"]
 
-  # ═══════════ PRIORIDAD 2 · Conectividad y telefonía ═══════════
-  # Sin feeds: todo se mide o se marca a mano.
-
-  - id: internet-sede-central
-    nombre: "Internet — Sede central"
-    categoria: conectividad
-    criticidad: alta
-    responsable: sistemas
-    operador: telefonica            # permite el indicador derivado D2 (correlación)
-    fuentes:
-      - tipo: sonda
-        agente: sede-central
-        saltos:                     # el primer salto que falla identifica la capa
-          - { nombre: "Gateway",      destino: "192.0.2.1" }
-          - { nombre: "DNS operador", destino: "80.58.61.250" }
-          - { nombre: "Internet",     destino: "https://www.example.com" }
-        intervalo_s: 60
-        umbral_perdida_pct: 5       # D8: la degradación importa tanto como la caída
-
-  - id: movil-respaldo
-    nombre: "Red móvil — operador de respaldo"
-    categoria: conectividad
-    criticidad: media
-    responsable: sistemas
-    nota: >
-      Movistar es la marca de Telefónica: un indicador, no dos. Antes de fiarse del
-      respaldo, comprobar sobre qué red circula: si va por la misma que la línea
-      principal, no es un respaldo.
-    fuentes:
-      - tipo: sonda                 # D3: SIM de datos en router 4G/5G o Raspberry Pi
-        agente: sede-central
-        interfaz: wwan0
-        destino: "https://www.example.com"
-        intervalo_s: 300
-
-  - id: cobertura-movil
-    nombre: "Cobertura móvil en la oficina"
-    categoria: conectividad
-    criticidad: baja
-    responsable: sistemas
-    nota: "Una antena concreta puede fallar sin que haya caída nacional. No confundir."
-    fuentes:
-      - tipo: manual
-
-  # ═══════════ PRIORIDAD 3 · Energía y sala técnica ═══════════
-
-  - id: sai-sede-central
-    nombre: "Suministro eléctrico (SAI)"
-    categoria: suministro
-    criticidad: alta
-    responsable: mantenimiento
-    fuentes:
-      - tipo: snmp                  # E1 y E2
-        host: "192.0.2.30"
-        oids:
-          alimentacion_red: "estado: red | bateria"
-          autonomia_min: "minutos restantes -> el número que decide si se apaga"
-          salud_bateria_pct: "una batería al 60% da la mitad de autonomía"
-      - tipo: manual                # respaldo si el SAI no es gestionable
-
-  - id: clima-sala-tecnica
-    nombre: "Temperatura de la sala técnica"
-    categoria: suministro
-    criticidad: alta
-    responsable: mantenimiento
-    nota: "El aire acondicionado falla más que la luz, y avisa con horas si se mide."
-    fuentes:
-      - tipo: snmp
-        host: "192.0.2.31"
-        umbral_aviso_c: 27
-        umbral_critico_c: 32
-
-  # ═══════════ PRIORIDAD 4 · Inteligencia artificial ═══════════
-  # La caída total es rara; lo normal es la degradación. De ahí las sondas.
+  # ───────── IA ─────────
 
   - id: claude
-    nombre: "Claude (Anthropic)"
-    categoria: ia
-    criticidad: media
-    responsable: sistemas
-    fuentes:
-      - tipo: statuspage
-        url: "https://status.anthropic.com"
-      - tipo: sonda                 # F6 y F7: latencia p95 y errores 429
-        metodo: api_minima
-        intervalo_s: 300
-        umbral_p95_ms: 8000
+    nombre: "Claude"
+    alerta: false
+    fuente:
+      tipo: statuspage
+      url: "https://status.anthropic.com"
 
   - id: chatgpt
-    nombre: "ChatGPT y API de OpenAI"
-    categoria: ia
-    criticidad: media
-    responsable: sistemas
-    nota: "La web y el API pueden fallar por separado."
-    fuentes:
-      - tipo: statuspage
-        url: "https://status.openai.com"
+    nombre: "ChatGPT"
+    alerta: false
+    fuente:
+      tipo: statuspage
+      url: "https://status.openai.com"
 
-  - id: copilot-github
+  - id: copilot
     nombre: "GitHub Copilot"
-    categoria: ia
-    criticidad: media
-    responsable: desarrollo
-    fuentes:
-      - tipo: statuspage
-        url: "https://www.githubstatus.com"
-        componentes: ["Copilot"]    # que no se ponga rojo si solo falla GitHub Pages
+    alerta: false
+    fuente:
+      tipo: statuspage
+      url: "https://www.githubstatus.com"
+      componentes: ["Copilot"]       # que no se ponga rojo si falla GitHub Pages
 
-  # ═══════════ EXTRA · caídas autoinfligidas y previsibles ═══════════
+  # ───────── Sin API: botón manual ─────────
+  # Nadie publica esto en formato consultable. Si nadie pulsa el botón,
+  # estas tres luces se quedan en verde durante la avería.
 
-  - id: certificados-tls
-    nombre: "Certificados TLS"
-    categoria: propio
-    criticidad: alta
-    responsable: sistemas
-    nota: "La caída evitable más común que existe. Media jornada de trabajo."
-    fuentes:
-      - tipo: sonda
-        metodo: tls_expiry
-        dominios: ["www.example.com", "vpn.example.com", "correo.example.com"]
-        umbrales_dias: [30, 14, 7]
-        intervalo_s: 86400
+  - id: telefonica
+    nombre: "Telefónica / Movistar"
+    detalle: "Movistar es la marca comercial de Telefónica: un indicador, no dos"
+    alerta: false
+    fuente:
+      tipo: manual
+
+  - id: vodafone
+    nombre: "Vodafone"
+    alerta: false
+    fuente:
+      tipo: manual
+
+  - id: energia
+    nombre: "Suministro eléctrico"
+    alerta: false
+    fuente:
+      tipo: manual
+
+# ───────── Alerta ─────────
+alerta:
+  canal: teams
+  webhook_env: TEAMS_WEBHOOK_URL     # nunca la URL en el repositorio
+  lecturas_para_avisar: 2            # antirrebote: ~4 min en rojo antes de avisar
+  avisar_recuperacion: true          # "Azure operativo tras 34 min"
+  ignorar: ["mantenimiento", "desconocido"]
