@@ -1,0 +1,95 @@
+# Inventario de servicios — plantilla para la decisión D1 y entrada de la Fase 1.
+# Rellenar con el catálogo real ANTES de empezar a desarrollar.
+#
+# criticidad: alta  -> ordena primero en el panel y puede generar alerta
+#             media -> se muestra, no alerta
+#             baja  -> se muestra al final
+#
+# tipo de fuente: statuspage | rss | json | graph | resource_health | sonda | manual
+
+servicios:
+
+  # ---------- IA ----------
+  - id: claude
+    nombre: "Claude (Anthropic)"
+    categoria: ia
+    criticidad: alta
+    responsable: sistemas
+    fuentes:
+      - tipo: statuspage
+        url: "https://status.anthropic.com"
+      - tipo: sonda            # llamada real mínima a la API (Fase 3)
+        intervalo_s: 300
+
+  - id: chatgpt
+    nombre: "ChatGPT / API OpenAI"
+    categoria: ia
+    criticidad: alta
+    responsable: sistemas
+    fuentes:
+      - tipo: statuspage
+        url: "https://status.openai.com"
+
+  - id: copilot
+    nombre: "GitHub Copilot"
+    categoria: ia
+    criticidad: media
+    responsable: desarrollo
+    fuentes:
+      - tipo: statuspage
+        url: "https://www.githubstatus.com"
+        componentes: ["Copilot"]   # no ponerse rojo si solo falla GitHub Pages
+
+  # ---------- Nube y puesto de trabajo ----------
+  - id: m365
+    nombre: "Microsoft 365 (Teams, Exchange, SharePoint)"
+    categoria: cloud
+    criticidad: alta
+    responsable: sistemas
+    fuentes:
+      - tipo: graph            # Service Health de NUESTRO tenant (Fase 2)
+        servicios: ["Microsoft Teams", "Exchange Online", "SharePoint Online"]
+
+  - id: azure
+    nombre: "Azure"
+    categoria: cloud
+    criticidad: alta
+    responsable: sistemas
+    fuentes:
+      - tipo: rss
+        url: "https://azure.status.microsoft/en-us/status/feed/"
+      - tipo: resource_health   # nuestra suscripción (Fase 2)
+        regiones: ["westeurope"]
+
+  # ---------- Conectividad: NO hay feed, se mide ----------
+  - id: wan-sede-central
+    nombre: "Internet — Sede central"
+    categoria: conectividad
+    criticidad: alta
+    responsable: sistemas
+    fuentes:
+      - tipo: sonda
+        agente: sede-central
+        saltos:                 # el primer salto que falla identifica la capa
+          - { nombre: "Gateway",       destino: "192.0.2.1" }
+          - { nombre: "DNS operador",  destino: "8.8.8.8" }
+          - { nombre: "Internet",      destino: "https://www.example.com" }
+        intervalo_s: 60
+
+  # ---------- Suministros: estado manual ----------
+  - id: energia-sede-central
+    nombre: "Suministro eléctrico — Sede central"
+    categoria: suministro
+    criticidad: alta
+    responsable: mantenimiento
+    fuentes:
+      - tipo: manual           # botón en el panel; queda quién y cuándo lo marcó
+      # - tipo: snmp           # si el SAI es gestionable, sustituye a lo manual
+
+  - id: telefonia-movil
+    nombre: "Telefonía móvil"
+    categoria: conectividad
+    criticidad: media
+    responsable: sistemas
+    fuentes:
+      - tipo: manual
