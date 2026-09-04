@@ -2,11 +2,11 @@
   "dia": "2026-09-04",
   "servicios": {
     "microsoft-365": {
-      "estado": "desconocido",
-      "desde": "2026-09-04T10:56:35Z",
+      "estado": "operativo",
+      "desde": "2026-09-04T11:15:35Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": "2026-09-04T10:56:35Z",
+      "roto_desde": null,
       "horas": "uu",
       "ultima_hora": "2026-09-04T11:00:00Z"
     },
