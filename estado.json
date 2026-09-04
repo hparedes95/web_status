@@ -64,6 +64,15 @@
       "horas": "oo",
       "ultima_hora": "2026-09-04T11:00:00Z"
     },
+    "gemini": {
+      "estado": "operativo",
+      "desde": "2026-09-04T11:20:53Z",
+      "fallos": 0,
+      "alertado": false,
+      "roto_desde": null,
+      "horas": "o",
+      "ultima_hora": "2026-09-04T11:00:00Z"
+    },
     "telefonica": {
       "estado": "operativo",
       "desde": "2026-09-04T10:56:35Z",
