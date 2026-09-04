@@ -17,7 +17,7 @@ copilot         operativo    Todos los componentes operativos
 telefonica      operativo    Sin incidencia marcada
 vodafone        operativo    Sin incidencia marcada
 energia         operativo    Sin incidencia marcada
-microsoft-365   desconocido  Falta la aplicación de Entra ID
+microsoft-365   operativo    Sonda propia (ver más abajo)
 ```
 
 ---
@@ -69,11 +69,15 @@ caida:energia
 Son las que encienden las luces sin feed. Solo quien tiene permiso de escritura puede
 aplicarlas, así que nadie de fuera puede tocar el panel aunque el repositorio sea público.
 
-## 4. Microsoft 365, si lo quieres en verde
+## 4. Microsoft 365, para que el dato sea de verdad
 
-Es el único indicador que no puede funcionar sin esto, y no es un problema del código:
-**Microsoft no publica ningún feed para Microsoft 365** (comprobado, ver
-[`02-fuentes.md`](02-fuentes.md)). La única fuente es Microsoft Graph.
+Ese indicador ya da señal, pero es una **sonda propia**: comprueba que responden los
+endpoints públicos de Microsoft. Detecta una caída total del inicio de sesión; no ve que
+Teams vaya lento. Por eso la fila lleva la etiqueta `sonda`.
+
+Para tener el estado oficial —y además el de *vuestro* tenant, no el global— hace falta
+Microsoft Graph. **Microsoft no publica ningún feed** (comprobado, ver
+[`02-fuentes.md`](02-fuentes.md)), así que no hay más caminos.
 
 1. **Entra ID → Registros de aplicaciones → Nuevo registro.**
 2. **Permisos de API →** Microsoft Graph → **Permisos de aplicación** →

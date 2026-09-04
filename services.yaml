@@ -6,6 +6,7 @@
 #   rss         feed RSS o Atom
 #   json        JSON con formato propio del proveedor
 #   graph       Microsoft Graph: Service Health de nuestro tenant
+#   m365        Graph si hay credenciales; si no, sonda propia
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
 # categoria: agrupa las tarjetas del panel
@@ -32,9 +33,15 @@ servicios:
     # fuente real es Graph, que además da el estado de NUESTRO tenant.
     # Requiere app en Entra ID con ServiceHealth.Read.All -> docs/04-arranque.md
     fuente:
-      tipo: graph
+      tipo: m365
+      # Con las credenciales puestas usa Graph (estado oficial de nuestro tenant).
       servicios: ["Exchange Online", "Microsoft Teams", "SharePoint Online",
                   "OneDrive for Business", "Microsoft 365 apps"]
+      # Sin ellas, sonda propia sobre endpoints públicos y documentados. Detecta
+      # una caída total del inicio de sesión, no una degradación de Teams.
+      sondas:
+        "inicio de sesión": "https://login.microsoftonline.com/common/discovery/keys"
+        "Graph": "https://graph.microsoft.com/v1.0/$metadata"
 
   - id: azure
     nombre: "Azure"

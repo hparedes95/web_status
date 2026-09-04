@@ -37,14 +37,47 @@ Se probaron cuatro URLs candidatas. Todas devuelven **la página web del panel**
 | `status.office365.com/api/feed` | Redirige a la anterior |
 | `portal.office.com/servicestatus/rss` | «There was a problem processing your request» |
 
-La conclusión es firme: **la única fuente para Microsoft 365 es Microsoft Graph.** Eso
+También se probaron las rutas de API que usa la propia página: `\/api\/status`,
+`\/api\/v2\/status`, `\/api\/servicestatus`. **Todas devuelven el mismo HTML**, porque es
+una ruta comodín: los datos salen de un bundle JavaScript minificado y con hash en el
+nombre. Destriparlo daría un endpoint no documentado que cambia con cada despliegue —
+la misma fragilidad que hizo descartar el scraping de Downdetector, solo que con mejor
+aspecto. Descartado por el mismo motivo.
+
+La conclusión es firme: **la única fuente oficial para Microsoft 365 es Microsoft Graph.** Eso
 tiene una ventaja, además: Graph da el estado de *nuestro* tenant, no el global, que es
 mejor dato que el que dan todos los demás proveedores del panel.
 
 Requiere una aplicación en Entra ID con el permiso de aplicación `ServiceHealth.Read.All`
-y consentimiento de administrador. El adaptador ya está escrito y probado; solo faltan las
-credenciales. Mientras no estén, esa luz queda en **«sin datos»** con un mensaje que dice
-exactamente qué falta — nunca en verde fingiendo que se comprobó algo.
+y consentimiento de administrador. El adaptador ya está escrito y probado.
+
+### Mientras tanto: sonda propia
+
+Sin esas credenciales, el indicador cae a una **comprobación propia** contra endpoints de
+Microsoft públicos, documentados y estables:
+
+| Endpoint | Verificado |
+|---|---|
+| `login.microsoftonline.com/common/discovery/keys` | ✅ HTTP 200, JSON |
+| `graph.microsoft.com/v1.0/$metadata` | — |
+
+**Qué detecta y qué no.** Detecta una caída total del inicio de sesión, que es la avería
+más grave que puede tener Microsoft 365. **No** ve que Teams vaya lento o que Exchange
+tenga colas. Por eso la fila del panel lleva la etiqueta **`sonda`** y el mensaje dice
+que no es el estado oficial: un verde ahí significa «responde», no «todo bien».
+
+Si la sonda no consigue llegar, el estado es `desconocido`, no `caído`: desde un único
+punto de observación no se puede distinguir «Microsoft está caído» de «no llegamos a
+Microsoft», y dar por caído lo segundo dispararía una alerta falsa.
+
+## Lo que se descartó, y por qué
+
+| Fuente | Motivo |
+|---|---|
+| **Downdetector** | Sus términos prohíben el scraping y su API es comercial. Además mide *gente quejándose*, no el estado del servicio: da falsos positivos |
+| Agregadores comerciales (StatusGator, IsDown…) | De pago, y agregan la misma página que ya no da datos |
+| El bundle JavaScript del panel de Microsoft | Endpoint no documentado, con hash que cambia en cada despliegue |
+| Scraping de webs de operadoras y distribuidoras | Frágil y contrario a sus términos |
 
 ## Sin fuente posible: botón manual
 

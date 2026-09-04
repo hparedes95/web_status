@@ -76,6 +76,10 @@ class Lectura:
     mensaje: str = ""
     url: str = ""
     incidencias: list[str] = field(default_factory=list)
+    # Una lectura «limitada» no viene del proveedor: es una comprobación nuestra
+    # de que su servicio responde. Detecta caídas totales, no degradaciones. El
+    # panel la marca para que nadie la confunda con un estado oficial.
+    limitado: bool = False
 
 
 # ─────────────────────────── acceso a red ───────────────────────────
@@ -343,11 +347,57 @@ def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
     )
 
 
+def leer_m365(cfg: dict) -> Lectura:
+    """Microsoft 365, por la mejor fuente disponible.
+
+    Con credenciales de Entra ID usa Microsoft Graph, que es el estado oficial de
+    nuestro tenant. Sin ellas cae a una sonda propia: Microsoft no publica ningún
+    feed —comprobado— y las rutas `/api/*` de su panel devuelven la misma página
+    web, porque los datos salen de un bundle JavaScript. Destripar ese bundle
+    sería un endpoint no documentado que se rompe solo, así que no se hace.
+
+    La sonda comprueba que responden endpoints públicos y documentados de
+    Microsoft. Detecta una caída total del inicio de sesión, que es la avería más
+    grave posible, pero **no** ve una degradación de Teams o de Exchange. Por eso
+    la lectura se marca como limitada.
+    """
+    if os.environ.get("M365_TENANT_ID"):
+        return leer_graph(cfg)
+
+    fallos = []
+    for nombre, url in cfg.get("sondas", {}).items():
+        try:
+            pedir(url)
+        except Exception as e:  # noqa: BLE001
+            fallos.append(f"{nombre}: {e}")
+
+    panel = "https://status.cloud.microsoft/"
+    if fallos:
+        # No se marca como caído: desde un único punto de observación no se puede
+        # distinguir «Microsoft está caído» de «no llegamos a Microsoft», y dar
+        # por caído lo segundo dispararía una alerta falsa.
+        return Lectura(
+            "desconocido",
+            "No se pudo llegar a los endpoints de Microsoft: " + "; ".join(fallos),
+            panel,
+            fallos,
+            limitado=True,
+        )
+    return Lectura(
+        "operativo",
+        "Los endpoints públicos de Microsoft responden. Comprobación propia, no el "
+        "estado oficial: Microsoft no publica feed y no ve degradaciones parciales",
+        panel,
+        limitado=True,
+    )
+
+
 ADAPTADORES = {
     "statuspage": lambda cfg, _id: leer_statuspage(cfg),
     "rss": lambda cfg, _id: leer_rss(cfg),
     "json": lambda cfg, _id: leer_aws(cfg),
     "graph": lambda cfg, _id: leer_graph(cfg),
+    "m365": lambda cfg, _id: leer_m365(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 
@@ -525,6 +575,7 @@ def main() -> int:
                 "url": enlace,
                 "desde": nuevo_estado[sid]["desde"],
                 "categoria": servicio.get("categoria", "otros"),
+                "limitado": lectura.limitado,
                 "historial": horas[-HORAS_VISIBLES:],
                 "disponibilidad": disponibilidad(horas),
                 "manual": servicio["fuente"].get("tipo") == "manual",
