@@ -4,13 +4,15 @@ Una página con **una luz por servicio** y **una alerta cuando alguna se pone en
 
 **Panel:** https://hparedes95.github.io/web_status/ · **Avisos:** Telegram
 
-> **Estado: construido, pendiente de puesta en marcha.** Faltan cinco pasos de
-> configuración que solo puede dar el dueño del repositorio: ver
-> [04 — Puesta en marcha](docs/04-arranque.md).
+> **Estado: construido y ejecutándose.** El workflow ya lee correctamente 9 de los 10
+> indicadores. Para que la web se publique falta **activar GitHub Pages** en los ajustes
+> del repositorio: ver [04 — Puesta en marcha](docs/04-arranque.md).
 
 ## Qué vigila
 
-**Automático** (feeds oficiales): Microsoft 365 · Azure · AWS · Claude · ChatGPT · GitHub · GitHub Copilot
+**Automático** (feeds oficiales): Azure · AWS · Claude · ChatGPT · GitHub · GitHub Copilot
+
+**Automático con credenciales**: Microsoft 365 (vía Microsoft Graph — Microsoft no publica feed)
 
 **Manual** (no existe API): Telefónica/Movistar · Vodafone · Suministro eléctrico
 

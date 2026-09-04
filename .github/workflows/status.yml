@@ -78,11 +78,18 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
           }
 
-      # `enablement: true` activa GitHub Pages en el repositorio si aún no lo está,
-      # así no hace falta tocar los ajustes a mano.
+      # Activar Pages desde aquí no es posible: el token del workflow no tiene
+      # permiso para crear el sitio (`Resource not accessible by integration`).
+      # Hay que activarlo una vez a mano, y este paso lo dice claro si falta.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
+        id: pages
+        continue-on-error: true
+
+      - name: Comprobar que GitHub Pages está activado
+        if: steps.pages.outcome != 'success'
+        run: |
+          echo "::error title=Falta activar GitHub Pages::Ajustes del repositorio > Pages > Source: GitHub Actions. El estado se ha leído y guardado igualmente; lo único que falta es publicar la página."
+          exit 1
 
       - uses: actions/upload-pages-artifact@v3
         with:

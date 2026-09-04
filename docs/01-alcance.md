@@ -7,7 +7,7 @@ Nada más.
 
 | # | Indicador | Cómo se obtiene | Automático |
 |---|---|---|---|
-| 1 | **Microsoft 365** (correo, Teams, SharePoint, Copilot) | Feed de estado de Microsoft | ✅ |
+| 1 | **Microsoft 365** (correo, Teams, SharePoint) | Microsoft Graph, estado de nuestro tenant | ⚙️ |
 | 2 | **Azure** | Feed RSS de estado de Azure | ✅ |
 | 3 | **AWS** | Health Dashboard público | ✅ |
 | 4 | **Claude** (Anthropic) | Página de estado (JSON) | ✅ |
@@ -52,8 +52,9 @@ sondas propias no hay forma de adelantarse: el panel dirá lo mismo que la pági
 solo que todas juntas en una pantalla.
 
 **3. El estado es global, no nuestro.** «Azure operativo» puede convivir con «nuestra
-suscripción degradada». La excepción es Microsoft 365 si se usa la vía autenticada (ver
-[`02-fuentes.md`](02-fuentes.md)), que sí da el estado de nuestro tenant.
+suscripción degradada». La excepción es Microsoft 365, que va por Microsoft Graph y sí da
+el estado de nuestro tenant — pero por eso mismo necesita credenciales
+(ver [`04-arranque.md`](04-arranque.md)).
 
 Con esto, el panel responde a **«¿está caído algo de lo que dependemos?»** y ahorra el
 paseo por diez pestañas. No responde a «¿somos nosotros o son ellos?».
