@@ -110,6 +110,62 @@ poller.pedir_json = lambda url, cabeceras=None: CADUCA
 r = poller.leer_google({"urls": ["https://x/incidents.json"], "productos": ["gemini"]})
 comprobar(r.estado == "operativo", "una incidencia abierta pero sin tocar en meses se ignora")
 
+# ── Latido del agente que corre dentro de la red ─────────────────────────
+print("\nLatido")
+
+import os  # noqa: E402
+
+os.environ["GITHUB_REPOSITORY"] = "x/y"
+_issue_real = poller._issue_con_etiqueta
+
+
+def fingir_issue(issue):
+    poller._issue_con_etiqueta = lambda etiqueta: issue
+
+
+CFG_SEDE = {"etiqueta": "latido:sede", "max_minutos": 5}
+CFG_LUZ = {
+    "etiqueta": "latido:sede", "max_minutos": 5, "campo": "energia",
+    "valores": {"red": "operativo", "bateria": "caido"},
+    "adjuntar": ["autonomia_min"],
+}
+
+fingir_issue(None)
+comprobar(poller.leer_latido(CFG_SEDE).estado == "desconocido",
+          "sin issue de latido -> desconocido, no verde")
+
+reciente = poller.iso(poller.ahora())
+fingir_issue({"updated_at": reciente, "html_url": "https://x",
+              "body": json.dumps({"energia": "red", "autonomia_min": 47})})
+comprobar(poller.leer_latido(CFG_SEDE).estado == "operativo", "latido reciente -> sede operativa")
+r = poller.leer_latido(CFG_LUZ)
+comprobar(r.estado == "operativo", "con corriente de red -> operativo")
+comprobar("47" in r.mensaje, "adjunta la autonomía restante")
+
+fingir_issue({"updated_at": reciente, "html_url": "https://x",
+              "body": json.dumps({"energia": "bateria", "autonomia_min": 12})})
+r = poller.leer_latido(CFG_LUZ)
+comprobar(r.estado == "caido", "el SAI en batería -> corte de luz")
+
+viejo = poller.iso(poller.ahora() - timedelta(hours=2))
+fingir_issue({"updated_at": viejo, "html_url": "https://x", "body": "{}"})
+r = poller.leer_latido(CFG_SEDE)
+comprobar(r.estado == "caido", "el silencio del agente es la señal de que algo pasa")
+comprobar("2 h" in r.mensaje, "dice cuánto lleva sin señal")
+
+fingir_issue({"updated_at": reciente, "html_url": "https://x", "body": "esto no es JSON"})
+comprobar(poller.leer_latido(CFG_LUZ).estado == "desconocido",
+          "un cuerpo ilegible -> desconocido")
+
+fingir_issue({"updated_at": reciente, "html_url": "https://x", "body": "{}"})
+comprobar(poller.leer_latido(CFG_LUZ).estado == "desconocido",
+          "si el latido no trae ese campo -> desconocido")
+
+# Deshacer el simulacro: si se queda puesto, los servicios manuales del ciclo
+# completo verían una issue abierta y saldrían en rojo.
+poller._issue_con_etiqueta = _issue_real
+os.environ.pop("GITHUB_REPOSITORY", None)
+
 # ── Un adaptador roto no puede tumbar el ciclo ───────────────────────────
 print("\nTolerancia a fallos")
 

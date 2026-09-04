@@ -382,6 +382,138 @@ def leer_google(cfg: dict) -> Lectura:
     )
 
 
+def _issue_con_etiqueta(etiqueta: str) -> dict | None:
+    """Primera issue abierta con esa etiqueta, o None."""
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    if not repo:
+        return None
+    url = (f"https://api.github.com/repos/{repo}/issues?state=open"
+           f"&labels={urllib.parse.quote(etiqueta)}&per_page=1")
+    cabeceras = {"Accept": "application/vnd.github+json"}
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        cabeceras["Authorization"] = f"Bearer {token}"
+    issues = pedir_json(url, cabeceras)
+    for i in issues:
+        if isinstance(i, dict) and "pull_request" not in i:
+            return i
+    return None
+
+
+def leer_latido(cfg: dict) -> Lectura:
+    """Señal enviada por un agente que corre DENTRO de nuestra red.
+
+    Resuelve lo que ningún feed puede resolver: si hay luz en la oficina, si la
+    línea está viva, si el SAI está tirando de batería. El agente actualiza el
+    cuerpo de una issue cada minuto; el panel mira cuándo se actualizó por última
+    vez y qué dice.
+
+    **El silencio es el dato.** Si el latido se para, o se ha ido la luz, o se ha
+    caído la línea, o ha muerto la máquina. Las tres son cosas que hay que mirar.
+    """
+    etiqueta = cfg["etiqueta"]
+    limite = int(cfg.get("max_minutos", 5))
+
+    issue = _issue_con_etiqueta(etiqueta)
+    if issue is None:
+        return Lectura(
+            "desconocido",
+            f"No hay ninguna issue abierta con la etiqueta {etiqueta}: "
+            "falta desplegar el agente (ver docs/06-agente.md)",
+        )
+
+    enlace = issue.get("html_url", "")
+    try:
+        visto = datetime.fromisoformat(issue["updated_at"].replace("Z", "+00:00"))
+    except (KeyError, ValueError):
+        return Lectura("desconocido", "El latido no trae fecha legible", enlace)
+
+    minutos = int((ahora() - visto).total_seconds() // 60)
+    if minutos > limite:
+        return Lectura(
+            "caido",
+            f"Sin señal desde hace {duracion_legible(iso(visto), ahora())}. "
+            "Puede ser corte de luz, caída de la línea o la máquina apagada",
+            enlace,
+        )
+
+    # Con `campo`, el latido alimenta varios indicadores: el mismo agente informa
+    # de la corriente, del SAI y de la cobertura móvil.
+    campo = cfg.get("campo")
+    if not campo:
+        return Lectura("operativo", f"Latido recibido hace {minutos} min", enlace)
+
+    try:
+        datos = json.loads(issue.get("body") or "{}")
+    except json.JSONDecodeError:
+        return Lectura("desconocido", "El cuerpo del latido no es JSON válido", enlace)
+
+    valor = datos.get(campo)
+    if valor is None:
+        return Lectura("desconocido", f"El latido no informa de «{campo}»", enlace)
+
+    estado = cfg.get("valores", {}).get(str(valor), "desconocido")
+    detalle = cfg.get("textos", {}).get(str(valor), f"{campo}: {valor}")
+    for extra in cfg.get("adjuntar", []):
+        if datos.get(extra) is not None:
+            detalle += f" · {extra}: {datos[extra]}"
+    return Lectura(estado, detalle, enlace)
+
+
+def leer_http(cfg: dict) -> Lectura:
+    """Sonda a un servicio propio: responde, y con qué margen caduca su certificado.
+
+    Para una empresa de software esto es lo que ve el cliente. Además vigila la
+    caducidad del certificado TLS, que es la caída autoinfligida más común y la
+    más fácil de evitar.
+    """
+    url = cfg["url"]
+    esperado = int(cfg.get("esperado", 200))
+    aviso_dias = int(cfg.get("aviso_tls_dias", 21))
+    avisos = []
+
+    try:
+        peticion = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(peticion, timeout=TIMEOUT) as r:
+            codigo = r.status
+    except urllib.error.HTTPError as e:
+        codigo = e.code
+    except Exception as e:  # noqa: BLE001
+        return Lectura("caido", f"No responde: {e}", url)
+
+    if codigo != esperado:
+        return Lectura("caido", f"Responde HTTP {codigo}, se esperaba {esperado}", url)
+
+    partes = urllib.parse.urlparse(url)
+    if partes.scheme == "https":
+        dias = dias_hasta_caducar_tls(partes.hostname, partes.port or 443)
+        if dias is None:
+            avisos.append("no se pudo leer el certificado")
+        elif dias < 0:
+            return Lectura("caido", f"El certificado TLS caducó hace {-dias} días", url)
+        elif dias <= aviso_dias:
+            return Lectura("degradado", f"El certificado TLS caduca en {dias} días", url)
+        else:
+            avisos.append(f"certificado válido {dias} días más")
+
+    return Lectura("operativo", " · ".join([f"HTTP {codigo}"] + avisos), url)
+
+
+def dias_hasta_caducar_tls(host: str, puerto: int) -> int | None:
+    import socket
+    import ssl
+
+    try:
+        contexto = ssl.create_default_context()
+        with socket.create_connection((host, puerto), timeout=TIMEOUT) as tcp:
+            with contexto.wrap_socket(tcp, server_hostname=host) as tls:
+                caduca = tls.getpeercert()["notAfter"]
+        vence = datetime.strptime(caduca, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+        return (vence - ahora()).days
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
     """Estado marcado a mano mediante issues etiquetadas `caida:<id>`.
 
@@ -396,24 +528,15 @@ def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
         # se sabe nada: nunca dar por operativo lo que no se ha podido comprobar.
         return Lectura("desconocido", "Sin acceso a las issues del repositorio", "")
 
-    etiqueta = urllib.parse.quote(f"caida:{servicio_id}")
-    url = f"https://api.github.com/repos/{repo}/issues?state=open&labels={etiqueta}&per_page=5"
-    cabeceras = {"Accept": "application/vnd.github+json"}
-    if token:
-        cabeceras["Authorization"] = f"Bearer {token}"
-
-    issues = pedir_json(url, cabeceras)
-    abiertas = [i for i in issues if isinstance(i, dict) and "pull_request" not in i]
-    if not abiertas:
+    issue = _issue_con_etiqueta(f"caida:{servicio_id}")
+    if issue is None:
         return Lectura("operativo", "Sin incidencia marcada", f"https://github.com/{repo}/issues")
 
-    issue = abiertas[0]
     autor = (issue.get("user") or {}).get("login", "alguien")
     return Lectura(
         "caido",
         f"{issue.get('title', 'Incidencia')} — marcado por @{autor}",
         issue.get("html_url", ""),
-        [i.get("title", "") for i in abiertas],
     )
 
 
@@ -469,6 +592,8 @@ ADAPTADORES = {
     "graph": lambda cfg, _id: leer_graph(cfg),
     "m365": lambda cfg, _id: leer_m365(cfg),
     "google": lambda cfg, _id: leer_google(cfg),
+    "latido": lambda cfg, _id: leer_latido(cfg),
+    "http": lambda cfg, _id: leer_http(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 

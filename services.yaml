@@ -115,6 +115,66 @@ servicios:
         - "https://www.google.com/appsstatus/dashboard/incidents.json"
       productos: ["gemini", "vertex ai"]
 
+  # ───────── Con el agente desplegado (docs/06-agente.md) ─────────
+  # Descomentar cuando el agente esté corriendo dentro de la red. Sustituyen a
+  # los tres botones manuales de abajo, que dejan de hacer falta.
+  #
+  # - id: sede-central
+  #   nombre: "Sede central"
+  #   detalle: "Luz, línea y máquina, todo en una señal"
+  #   categoria: infra
+  #   alerta: true
+  #   fuente:
+  #     tipo: latido
+  #     etiqueta: "latido:sede-central"
+  #     max_minutos: 5        # sin señal más tiempo que esto = algo pasa
+  #
+  # - id: energia-sede-central
+  #   nombre: "Suministro eléctrico"
+  #   categoria: infra
+  #   alerta: true
+  #   fuente:
+  #     tipo: latido
+  #     etiqueta: "latido:sede-central"
+  #     campo: energia
+  #     valores: { red: operativo, bateria: caido }
+  #     textos:
+  #       red: "Corriente de red"
+  #       bateria: "SIN CORRIENTE — el SAI está tirando de batería"
+  #     adjuntar: [autonomia_min, bateria_pct]   # los minutos que quedan
+  #
+  # - id: movil-respaldo
+  #   nombre: "Respaldo móvil"
+  #   categoria: infra
+  #   alerta: false
+  #   fuente:
+  #     tipo: latido
+  #     etiqueta: "latido:sede-central"
+  #     campo: movil
+  #     valores: { ok: operativo, sin_señal: degradado }
+
+  # ───────── Nuestros propios servicios ─────────
+  # Para una empresa de software, esto es lo que ve el cliente. Vigila también
+  # la caducidad del certificado TLS, la caída autoinfligida más común.
+  #
+  # - id: web-publica
+  #   nombre: "Nuestra web"
+  #   categoria: propio
+  #   alerta: true
+  #   fuente:
+  #     tipo: http
+  #     url: "https://www.ejemplo.com/"
+  #     esperado: 200
+  #     aviso_tls_dias: 21
+  #
+  # - id: api-produccion
+  #   nombre: "API de producción"
+  #   categoria: propio
+  #   alerta: true
+  #   fuente:
+  #     tipo: http
+  #     url: "https://api.ejemplo.com/health"
+
   # ───────── Sin API: botón manual ─────────
   # Nadie publica esto en formato consultable. Si nadie pulsa el botón,
   # estas tres luces se quedan en verde durante la avería.
