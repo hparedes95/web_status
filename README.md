@@ -29,6 +29,8 @@ avería con el operador y la marca, el resto deja de llamar al mismo soporte.
 | [01 — Alcance](docs/01-alcance.md) | Qué entra, qué no, y las tres limitaciones que hay que asumir |
 | [02 — Fuentes](docs/02-fuentes.md) | De dónde sale cada dato y la decisión pendiente sobre Microsoft 365 |
 | [03 — Implementación](docs/03-implementacion.md) | Cómo funciona por dentro: adaptadores, estados y la regla de la alerta |
+| [05 — Qué añadir a continuación](docs/05-mejoras.md) | Propuesta priorizada de mejoras |
+| [06 — Agente de latido](docs/06-agente.md) | Energía, línea y telefonía medidas desde dentro |
 | [04 — Puesta en marcha](docs/04-arranque.md) | Los cinco pasos que faltan: bot de Telegram, secretos, Pages, etiquetas y primer ciclo |
 | [referencia/](docs/referencia/) | Análisis previo, con un alcance más amplio que se descartó |
 

@@ -175,6 +175,34 @@ servicios:
   #     tipo: http
   #     url: "https://api.ejemplo.com/health"
 
+  # ───────── Herramientas de las que depende poder desplegar ─────────
+  # Si se cae npm, PyPI o Docker Hub no se construye ni se despliega nada.
+  # Las cuatro fuentes están comprobadas: descomentar y listo.
+  #
+  # - id: npm
+  #   nombre: "npm"
+  #   categoria: ia
+  #   alerta: false
+  #   fuente: { tipo: statuspage, url: "https://status.npmjs.org" }
+  #
+  # - id: pypi
+  #   nombre: "PyPI"
+  #   categoria: ia
+  #   alerta: false
+  #   fuente: { tipo: statuspage, url: "https://status.python.org" }
+  #
+  # - id: docker-hub
+  #   nombre: "Docker Hub"
+  #   categoria: ia
+  #   alerta: false
+  #   fuente: { tipo: statuspage, url: "https://www.dockerstatus.com" }
+  #
+  # - id: hashicorp
+  #   nombre: "HashiCorp"
+  #   categoria: ia
+  #   alerta: false
+  #   fuente: { tipo: statuspage, url: "https://status.hashicorp.com" }
+
   # ───────── Sin API: botón manual ─────────
   # Nadie publica esto en formato consultable. Si nadie pulsa el botón,
   # estas tres luces se quedan en verde durante la avería.
