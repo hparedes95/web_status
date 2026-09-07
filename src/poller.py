@@ -53,7 +53,6 @@ EVIDENCIA = {
     "m365": "oficial",     # con credenciales; sin ellas cae a sonda propia
     "ioda": "externa",
     "http": "propia",
-    "latido": "propia",
     "manual": "persona",
 }
 
@@ -591,77 +590,6 @@ def _issue_con_etiqueta(etiqueta: str) -> dict | None:
     return None
 
 
-def leer_latido(cfg: dict) -> Lectura:
-    """Señal enviada por un agente que corre DENTRO de nuestra red.
-
-    Resuelve lo que ningún feed puede resolver: si hay luz en la oficina, si la
-    línea está viva, si el SAI está tirando de batería. El agente actualiza el
-    cuerpo de una issue cada minuto; el panel mira cuándo se actualizó por última
-    vez y qué dice.
-
-    **El silencio es el dato.** Si el latido se para, o se ha ido la luz, o se ha
-    caído la línea, o ha muerto la máquina. Las tres son cosas que hay que mirar.
-    """
-    etiqueta = cfg["etiqueta"]
-    limite = int(cfg.get("max_minutos", 5))
-
-    issue = _issue_con_etiqueta(etiqueta)
-    if issue is None:
-        return Lectura(
-            "desconocido",
-            f"No hay ninguna issue abierta con la etiqueta {etiqueta}: "
-            "falta desplegar el agente (ver docs/06-agente.md)",
-        )
-
-    enlace = issue.get("html_url", "")
-    try:
-        visto = datetime.fromisoformat(issue["updated_at"].replace("Z", "+00:00"))
-    except (KeyError, ValueError):
-        return Lectura("desconocido", "El latido no trae fecha legible", enlace)
-
-    # Distinguir «nunca ha reportado» de «reportaba y se ha callado». Lo primero
-    # es que falta desplegar el agente; lo segundo sí es una caída. Confundirlos
-    # pintaría de rojo una instalación a medio hacer.
-    try:
-        payload = json.loads(issue.get("body") or "{}")
-    except json.JSONDecodeError:
-        payload = {}
-    if not isinstance(payload, dict) or "ts" not in payload:
-        return Lectura(
-            "desconocido",
-            "El agente todavía no ha reportado nunca: falta desplegarlo "
-            "(docs/06-agente.md)",
-            enlace,
-        )
-
-    minutos = int((ahora() - visto).total_seconds() // 60)
-    if minutos > limite:
-        return Lectura(
-            "caido",
-            f"Sin señal desde hace {duracion_legible(iso(visto), ahora())}. "
-            "Puede ser corte de luz, caída de la línea o la máquina apagada",
-            enlace,
-        )
-
-    # Con `campo`, el latido alimenta varios indicadores: el mismo agente informa
-    # de la corriente, del SAI y de la cobertura móvil.
-    campo = cfg.get("campo")
-    if not campo:
-        return Lectura("operativo", f"Latido recibido hace {minutos} min", enlace)
-
-    datos = payload
-    valor = datos.get(campo)
-    if valor is None:
-        return Lectura("desconocido", f"El latido no informa de «{campo}»", enlace)
-
-    estado = cfg.get("valores", {}).get(str(valor), "desconocido")
-    detalle = cfg.get("textos", {}).get(str(valor), f"{campo}: {valor}")
-    for extra in cfg.get("adjuntar", []):
-        if datos.get(extra) is not None:
-            detalle += f" · {extra}: {datos[extra]}"
-    return Lectura(estado, detalle, enlace)
-
-
 def leer_http(cfg: dict) -> Lectura:
     """Sonda a un servicio propio: responde, y con qué margen caduca su certificado.
 
@@ -813,7 +741,6 @@ ADAPTADORES = {
     "graph": lambda cfg, _id: leer_graph(cfg),
     "m365": lambda cfg, _id: leer_m365(cfg),
     "google": lambda cfg, _id: leer_google(cfg),
-    "latido": lambda cfg, _id: leer_latido(cfg),
     "http": lambda cfg, _id: leer_http(cfg),
     "ree": lambda cfg, _id: leer_ree(cfg),
     "ioda": lambda cfg, _id: leer_ioda(cfg),

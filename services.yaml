@@ -117,44 +117,6 @@ servicios:
         - "https://www.google.com/appsstatus/dashboard/incidents.json"
       productos: ["gemini", "vertex ai"]
 
-  # ───────── Medido desde dentro por el agente (docs/06-agente.md) ─────────
-  # Activo. Mientras el agente no reporte, esta luz sale en GRIS con el texto
-  # «falta desplegarlo» — no en rojo, porque no hay caída: falta instalarlo.
-  - id: sede-central
-    nombre: "Sede central"
-    detalle: "Luz, línea y máquina: una sola señal"
-    categoria: infra
-    alerta: true
-    fuente:
-      tipo: latido
-      etiqueta: "latido:sede-central"
-      max_minutos: 5          # sin señal más tiempo que esto = algo pasa
-
-  # Con el SAI leído por el agente, esta sustituye al botón manual de abajo.
-  # - id: energia-sede-central
-  #   nombre: "Suministro eléctrico"
-  #   categoria: infra
-  #   alerta: true
-  #   fuente:
-  #     tipo: latido
-  #     etiqueta: "latido:sede-central"
-  #     campo: energia
-  #     valores: { red: operativo, bateria: caido }
-  #     textos:
-  #       red: "Corriente de red"
-  #       bateria: "SIN CORRIENTE — el SAI está tirando de batería"
-  #     adjuntar: [autonomia_min, bateria_pct]   # los minutos que quedan
-  #
-  # - id: movil-respaldo
-  #   nombre: "Respaldo móvil"
-  #   categoria: infra
-  #   alerta: false
-  #   fuente:
-  #     tipo: latido
-  #     etiqueta: "latido:sede-central"
-  #     campo: movil
-  #     valores: { ok: operativo, sin_señal: degradado }
-
   # ───────── Nuestros propios servicios ─────────
   # Para una empresa de software, esto es lo que ve el cliente. Vigila también
   # la caducidad del certificado TLS, la caída autoinfligida más común.
