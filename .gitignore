@@ -3,3 +3,7 @@ __pycache__/
 .venv/
 venv/
 .env
+
+# Lo genera el poller en cada ciclo y lo publica el workflow. Tenerlo versionado
+# solo sirve para que alguien lea datos viejos creyendo que son los de ahora.
+site/status.json
