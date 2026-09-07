@@ -134,21 +134,28 @@ fingir_issue(None)
 comprobar(poller.leer_latido(CFG_SEDE).estado == "desconocido",
           "sin issue de latido -> desconocido, no verde")
 
+fingir_issue({"updated_at": poller.iso(poller.ahora()), "html_url": "https://x",
+              "body": "Aquí escribirá el agente cuando se despliegue."})
+r = poller.leer_latido(CFG_SEDE)
+comprobar(r.estado == "desconocido", "issue creada pero agente sin desplegar -> desconocido")
+comprobar("falta desplegarlo" in r.mensaje, "y dice que falta desplegarlo, no que esté caído")
+
 reciente = poller.iso(poller.ahora())
 fingir_issue({"updated_at": reciente, "html_url": "https://x",
-              "body": json.dumps({"energia": "red", "autonomia_min": 47})})
+              "body": json.dumps({"ts": reciente, "energia": "red", "autonomia_min": 47})})
 comprobar(poller.leer_latido(CFG_SEDE).estado == "operativo", "latido reciente -> sede operativa")
 r = poller.leer_latido(CFG_LUZ)
 comprobar(r.estado == "operativo", "con corriente de red -> operativo")
 comprobar("47" in r.mensaje, "adjunta la autonomía restante")
 
 fingir_issue({"updated_at": reciente, "html_url": "https://x",
-              "body": json.dumps({"energia": "bateria", "autonomia_min": 12})})
+              "body": json.dumps({"ts": reciente, "energia": "bateria", "autonomia_min": 12})})
 r = poller.leer_latido(CFG_LUZ)
 comprobar(r.estado == "caido", "el SAI en batería -> corte de luz")
 
 viejo = poller.iso(poller.ahora() - timedelta(hours=2))
-fingir_issue({"updated_at": viejo, "html_url": "https://x", "body": "{}"})
+fingir_issue({"updated_at": viejo, "html_url": "https://x",
+              "body": json.dumps({"ts": viejo, "energia": "red"})})
 r = poller.leer_latido(CFG_SEDE)
 comprobar(r.estado == "caido", "el silencio del agente es la señal de que algo pasa")
 comprobar("2 h" in r.mensaje, "dice cuánto lleva sin señal")
@@ -157,7 +164,8 @@ fingir_issue({"updated_at": reciente, "html_url": "https://x", "body": "esto no 
 comprobar(poller.leer_latido(CFG_LUZ).estado == "desconocido",
           "un cuerpo ilegible -> desconocido")
 
-fingir_issue({"updated_at": reciente, "html_url": "https://x", "body": "{}"})
+fingir_issue({"updated_at": reciente, "html_url": "https://x",
+              "body": json.dumps({"ts": reciente})})
 comprobar(poller.leer_latido(CFG_LUZ).estado == "desconocido",
           "si el latido no trae ese campo -> desconocido")
 

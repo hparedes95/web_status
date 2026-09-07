@@ -428,6 +428,21 @@ def leer_latido(cfg: dict) -> Lectura:
     except (KeyError, ValueError):
         return Lectura("desconocido", "El latido no trae fecha legible", enlace)
 
+    # Distinguir «nunca ha reportado» de «reportaba y se ha callado». Lo primero
+    # es que falta desplegar el agente; lo segundo sí es una caída. Confundirlos
+    # pintaría de rojo una instalación a medio hacer.
+    try:
+        payload = json.loads(issue.get("body") or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    if not isinstance(payload, dict) or "ts" not in payload:
+        return Lectura(
+            "desconocido",
+            "El agente todavía no ha reportado nunca: falta desplegarlo "
+            "(docs/06-agente.md)",
+            enlace,
+        )
+
     minutos = int((ahora() - visto).total_seconds() // 60)
     if minutos > limite:
         return Lectura(
@@ -443,11 +458,7 @@ def leer_latido(cfg: dict) -> Lectura:
     if not campo:
         return Lectura("operativo", f"Latido recibido hace {minutos} min", enlace)
 
-    try:
-        datos = json.loads(issue.get("body") or "{}")
-    except json.JSONDecodeError:
-        return Lectura("desconocido", "El cuerpo del latido no es JSON válido", enlace)
-
+    datos = payload
     valor = datos.get(campo)
     if valor is None:
         return Lectura("desconocido", f"El latido no informa de «{campo}»", enlace)

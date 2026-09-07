@@ -32,13 +32,14 @@ saliente a la API de GitHub. Actualiza el cuerpo de una issue, que el panel lee.
 
 ## Puesta en marcha
 
-### 1. Crear la issue del latido
+### Ya hecho
 
-Abre una issue en el repositorio titulada, por ejemplo, **«Latido — Sede central»**, con la
-etiqueta **`latido:sede-central`**. Déjala abierta: no es una incidencia, es el buzón donde
-el agente escribe. Apunta su número.
+- ✅ La issue del latido existe: **#1**, con la etiqueta `latido:sede-central`. No cerrarla.
+- ✅ Las etiquetas `caida:telefonica`, `caida:vodafone` y `caida:energia` están creadas.
+- ✅ El indicador **«Sede central»** ya está en el panel. Sale **en gris** con el texto
+  «falta desplegarlo» — no en rojo, porque no hay ninguna caída: falta instalar el agente.
 
-### 2. Crear un token para el agente
+### 1. Crear un token para el agente
 
 **Ajustes de tu cuenta → Developer settings → Personal access tokens → Fine-grained tokens**
 
@@ -48,11 +49,25 @@ el agente escribe. Apunta su número.
 Ese token vive en una máquina de la oficina, así que dale el mínimo alcance posible: con
 esos permisos no puede tocar el código ni los secretos.
 
-### 3. Instalar el agente
+### 2. Instalar el agente
 
-Copia `agente/latido.py` a una máquina que esté siempre encendida y **enchufada al SAI**
-—si no, no puede contarte que se ha ido la luz—. Solo necesita Python 3, sin dependencias.
+En una máquina que esté **siempre encendida y enchufada al SAI**:
 
+```bash
+git clone https://github.com/hparedes95/web_status.git
+sudo ./web_status/agente/instalar.sh
+```
+
+Pregunta el token, el nombre del SAI en NUT y la interfaz del respaldo móvil (las dos
+últimas se pueden dejar en blanco). Copia el agente, guarda el token en un fichero que
+solo root puede leer —no en el crontab, donde sería visible— hace una prueba en seco y
+programa el cron cada minuto.
+
+En un par de minutos la luz «Sede central» del panel pasa a verde.
+
+<details><summary>A mano, si prefieres no usar el script</summary>
+
+Copia `agente/latido.py` donde quieras. Solo necesita Python 3, sin dependencias.
 Configúralo por variables de entorno:
 
 | Variable | Para qué |
@@ -69,16 +84,15 @@ Comprueba qué recogería, sin enviar nada:
 python3 agente/latido.py --probar
 ```
 
-Y prográmalo cada minuto:
+Y prográmalo cada minuto.
 
-```cron
-* * * * * LATIDO_TOKEN=... LATIDO_ISSUE=12 LATIDO_UPS=sai01 /usr/bin/python3 /opt/latido.py
-```
+</details>
 
-### 4. Encender los indicadores
+### 3. Cuando el SAI esté leyéndose
 
-En `services.yaml` hay tres bloques comentados listos: sede, suministro eléctrico y
-respaldo móvil. Descoméntalos y borra los botones manuales, que ya no hacen falta.
+En `services.yaml` quedan dos bloques comentados —suministro eléctrico y respaldo móvil—
+que sustituyen a los botones manuales. Descoméntalos y borra los manuales cuando el agente
+esté informando de `energia` y `movil`, que se ve en el cuerpo de la issue #1.
 
 ## Sobre el SAI
 
