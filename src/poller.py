@@ -382,6 +382,77 @@ def leer_google(cfg: dict) -> Lectura:
     )
 
 
+def leer_ree(cfg: dict) -> Lectura:
+    """Estado de la red eléctrica española, vía la API pública de Red Eléctrica.
+
+    `apidatos.ree.es` es una API **documentada y pública**, no un scraping: publica
+    la demanda nacional en tiempo real. Es la única fuente seria que existe sobre
+    el estado del suministro en España.
+
+    **Qué ve y qué no.** Ve la red nacional: un apagón peninsular como el de abril
+    de 2025 aparece aquí en cuestión de minutos, porque la demanda se desploma.
+    **No ve** un corte en vuestra calle ni en vuestro edificio — para eso no hay
+    fuente pública, hay que medirlo desde dentro.
+    """
+    datos = pedir_json(cfg["url"])
+    series = datos.get("included") if isinstance(datos, dict) else None
+    if not isinstance(series, list) or not series:
+        return Lectura("desconocido", "Formato inesperado en la API de REE", cfg.get("panel", ""))
+
+    # De las series que devuelve (real, prevista, programada) interesa la real.
+    valores = []
+    for serie in series:
+        if not isinstance(serie, dict):
+            continue
+        titulo = str((serie.get("attributes") or {}).get("title", "")).lower()
+        if cfg.get("serie", "real") not in titulo:
+            continue
+        valores = [v for v in (serie.get("attributes") or {}).get("values", [])
+                   if isinstance(v, dict) and v.get("value") is not None]
+        if valores:
+            break
+    if not valores:
+        return Lectura("desconocido", "REE no está devolviendo valores de demanda",
+                       cfg.get("panel", ""))
+
+    ultimo = valores[-1]
+    panel = cfg.get("panel", "")
+    try:
+        medido = datetime.fromisoformat(str(ultimo["datetime"]))
+    except (KeyError, ValueError):
+        return Lectura("desconocido", "El último dato de REE no trae fecha legible", panel)
+
+    # Si REE deja de publicar, no sabemos nada: no es que no haya luz.
+    retraso = (ahora() - medido.astimezone(timezone.utc)).total_seconds() / 60
+    if retraso > cfg.get("max_minutos", 60):
+        return Lectura(
+            "desconocido",
+            f"REE no publica datos desde hace {int(retraso)} min",
+            panel,
+        )
+
+    mw = round(float(ultimo["value"]))
+    # Una caída brusca en una hora es la firma de un apagón: la demanda nacional
+    # no se mueve así ni de día ni de noche. Un umbral generoso evita falsos
+    # positivos por la curva normal de consumo.
+    caida_max = cfg.get("caida_pct_1h", 30)
+    hace_una_hora = valores[-7] if len(valores) >= 7 else valores[0]
+    try:
+        antes = float(hace_una_hora["value"])
+        caida = 100 * (antes - float(ultimo["value"])) / antes if antes else 0
+    except (TypeError, ValueError, ZeroDivisionError):
+        caida = 0
+
+    if caida > caida_max:
+        return Lectura(
+            "caido",
+            f"La demanda nacional ha caído un {caida:.0f} % en una hora "
+            f"({mw:,} MW ahora)".replace(",", "."),
+            panel,
+        )
+    return Lectura("operativo", f"Demanda nacional {mw:,} MW".replace(",", "."), panel)
+
+
 def _issue_con_etiqueta(etiqueta: str) -> dict | None:
     """Primera issue abierta con esa etiqueta, o None."""
     repo = os.environ.get("GITHUB_REPOSITORY", "")
@@ -605,6 +676,7 @@ ADAPTADORES = {
     "google": lambda cfg, _id: leer_google(cfg),
     "latido": lambda cfg, _id: leer_latido(cfg),
     "http": lambda cfg, _id: leer_http(cfg),
+    "ree": lambda cfg, _id: leer_ree(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 

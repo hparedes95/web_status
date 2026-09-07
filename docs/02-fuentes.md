@@ -83,6 +83,49 @@ Si la sonda no consigue llegar, el estado es `desconocido`, no `caído`: desde u
 punto de observación no se puede distinguir «Microsoft está caído» de «no llegamos a
 Microsoft», y dar por caído lo segundo dispararía una alerta falsa.
 
+## Energía: sí hay fuente, pero es nacional
+
+`apidatos.ree.es` es la **API pública y documentada de Red Eléctrica de España**. No es
+scraping. Publica la demanda nacional en tiempo real; comprobado: HTTP 200, JSON, dato de
+hace minutos.
+
+**Qué ve.** La red nacional. Un apagón peninsular como el de abril de 2025 aparece aquí en
+minutos, porque la demanda se desploma. El adaptador avisa si cae más de un 30 % en una
+hora — la curva normal día/noche no se mueve así ni de lejos, de ahí el umbral.
+
+**Qué no ve.** Un corte en vuestra calle, en vuestro edificio o en vuestro polígono. Para
+eso **no existe fuente pública**, y no es por no buscar:
+
+| Probado | Resultado |
+|---|---|
+| `edistribucion.com` y su mapa de cortes | Sitio AEM; las rutas evidentes dan 404 y no expone API |
+| `edistribucion.com/es/red-electrica/Corte_luz.html` | 404 |
+| Endesa como comercializadora | No tiene red: los cortes son de la distribuidora |
+
+Además, en parte del Pirineo de Lleida la distribuidora ni siquiera es e-distribución, así
+que «¿está Endesa activo en Lleida?» no es una pregunta con una sola respuesta.
+
+## Operadores móviles: no hay nada
+
+Se ha buscado, y el resultado es concluyente:
+
+| Probado | Resultado |
+|---|---|
+| `movistar.es` | SPA de Next.js. Sin endpoint de estado |
+| `movistar.es/particulares/atencion-cliente/averias` | 404 |
+| `ayuda.vodafone.es/particulares/averias` | Error TLS: el host rechaza la petición |
+
+Ni Movistar ni Vodafone publican estado por zona. Sus páginas de averías van tras login y
+atadas a una línea concreta.
+
+**Tampoco vale una sonda remota.** Se podría comprobar desde el runner si responden sus DNS
+públicos, pero eso no dice nada útil: una caída de cobertura móvil en Lleida no afecta a la
+infraestructura pública de Telefónica, y un fallo de rutado desde GitHub daría un rojo
+falso. Sería una luz que parece informar y no informa — justo lo que este panel evita.
+
+Por eso esos dos indicadores **se quedan en manual**, y la fila lo dice: «Sin fuente
+pública: se marca a mano».
+
 ## Lo que se descartó, y por qué
 
 | Fuente | Motivo |
@@ -91,6 +134,7 @@ Microsoft», y dar por caído lo segundo dispararía una alerta falsa.
 | Agregadores comerciales (StatusGator, IsDown…) | De pago, y agregan la misma página que ya no da datos |
 | El bundle JavaScript del panel de Microsoft | Endpoint no documentado, con hash que cambia en cada despliegue |
 | Scraping de webs de operadoras y distribuidoras | Frágil y contrario a sus términos |
+| Sonda remota a los DNS de los operadores | Verde que no significa nada: no ve la cobertura móvil |
 
 ## Sin fuente posible: botón manual
 

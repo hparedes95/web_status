@@ -8,6 +8,7 @@
 #   graph       Microsoft Graph: Service Health de nuestro tenant
 #   m365        Graph si hay credenciales; si no, sonda propia
 #   google      paneles de estado de Google Cloud y Workspace
+#   ree         demanda nacional en tiempo real (API pública de Red Eléctrica)
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
 # categoria: agrupa las tarjetas del panel
@@ -222,8 +223,23 @@ servicios:
     fuente:
       tipo: manual
 
+  - id: red-electrica
+    nombre: "Red eléctrica española"
+    detalle: "Demanda nacional en tiempo real, según Red Eléctrica"
+    categoria: infra
+    alerta: true
+    fuente:
+      tipo: ree
+      # API pública y documentada de REE. No es scraping.
+      url: "https://apidatos.ree.es/es/datos/demanda/demanda-tiempo-real?time_trunc=hour"
+      panel: "https://demanda.ree.es/visiona/peninsula/demandaqh/total"
+      serie: "real"          # de las series que da REE (real, prevista, programada)
+      max_minutos: 60        # sin dato nuevo en más de una hora -> desconocido
+      caida_pct_1h: 30       # una caída así en una hora es la firma de un apagón
+
   - id: energia
-    nombre: "Suministro eléctrico"
+    nombre: "Suministro eléctrico — sede"
+    detalle: "Corte en nuestro edificio. No hay fuente pública: alguien tiene que marcarlo"
     categoria: infra
     alerta: false
     fuente:

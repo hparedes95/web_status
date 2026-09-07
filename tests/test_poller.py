@@ -110,6 +110,55 @@ poller.pedir_json = lambda url, cabeceras=None: CADUCA
 r = poller.leer_google({"urls": ["https://x/incidents.json"], "productos": ["gemini"]})
 comprobar(r.estado == "operativo", "una incidencia abierta pero sin tocar en meses se ignora")
 
+# ── Red Eléctrica de España ──────────────────────────────────────────────
+print("\nRed eléctrica (API de REE)")
+
+
+def demanda(valores):
+    """Respuesta de apidatos.ree.es con la serie de demanda real."""
+    return {"data": {}, "included": [
+        {"attributes": {"title": "Demanda prevista", "values": []}},
+        {"attributes": {"title": "Demanda real", "values": valores}},
+    ]}
+
+
+def punto(minutos_atras, mw):
+    cuando = poller.ahora() - timedelta(minutes=minutos_atras)
+    return {"value": mw, "datetime": cuando.isoformat()}
+
+
+CFG_REE = {"url": "https://x", "panel": "https://p", "serie": "real",
+           "max_minutos": 60, "caida_pct_1h": 30}
+
+# Curva normal: siete puntos de diez minutos, con variación suave.
+normal = [punto(60 - i * 10, 28000 + i * 100) for i in range(7)]
+fingir_json(demanda(normal))
+r = poller.leer_ree(CFG_REE)
+comprobar(r.estado == "operativo", "demanda normal -> operativo")
+comprobar("28.600 MW" in r.mensaje, "muestra los megavatios actuales")
+
+# Apagón: la demanda se desploma en una hora.
+apagon = [punto(60 - i * 10, 28000) for i in range(6)] + [punto(0, 9000)]
+fingir_json(demanda(apagon))
+r = poller.leer_ree(CFG_REE)
+comprobar(r.estado == "caido", "una caída del 68 % en una hora -> apagón")
+comprobar("%" in r.mensaje, "y dice cuánto ha caído")
+
+# La curva normal noche/día no puede disparar el aviso.
+noche = [punto(60 - i * 10, 30000 - i * 400) for i in range(7)]
+fingir_json(demanda(noche))
+comprobar(poller.leer_ree(CFG_REE).estado == "operativo",
+          "la bajada normal de la curva diaria no dispara falso positivo")
+
+# REE deja de publicar: no sabemos, no es que no haya luz.
+fingir_json(demanda([punto(300, 28000)]))
+r = poller.leer_ree(CFG_REE)
+comprobar(r.estado == "desconocido", "sin datos nuevos de REE -> desconocido, no caído")
+
+fingir_json({"data": {}})
+comprobar(poller.leer_ree(CFG_REE).estado == "desconocido",
+          "formato inesperado -> desconocido")
+
 # ── Latido del agente que corre dentro de la red ─────────────────────────
 print("\nLatido")
 
