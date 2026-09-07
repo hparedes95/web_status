@@ -4,25 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Estado de servicios</title>
-<meta name="description" content="Estado de los proveedores de los que dependemos, en una pantalla.">
+<meta name="description" content="Estado de los proveedores de los que dependemos, y de dónde sale cada dato.">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🚦</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
-  :root{
-    --ground:#F1F3F6;
-    --surface:#FFFFFF;
-    --sunk:#E7EBEF;
-    --ink:#141D26;
-    --ink-2:#44535F;
-    --muted:#6B7986;
-    --line:#DCE2E8;
-    --line-soft:#EAEEF2;
-    --accent:#125C74;
+  /* ═══════════════════════════════════════════════════════════════════
+     Panel de estado. Dos decisiones de diseño mandan sobre el resto:
 
-    /* Paleta de estado, validada para daltonismo y contraste sobre esta superficie.
-       Nunca se usa el color solo: cada fila lleva también el estado escrito. */
+     1. El color nunca va solo. Cada estado se escribe, además de pintarse.
+        La paleta está validada para las tres formas de daltonismo y para
+        contraste AA sobre su propio fondo.
+     2. La procedencia del dato es estructura, no adorno. La columna de la
+        izquierda dice de dónde sale cada luz, y su filete cambia de trazo:
+        continuo si lo dice el proveedor, discontinuo si lo mide un tercero,
+        punteado si lo medimos nosotros, doble si lo escribió una persona.
+        Un verde no vale lo mismo según de dónde venga.
+     ═══════════════════════════════════════════════════════════════════ */
+  :root{
+    --papel:#EFEFF1;
+    --tabla:#FFFFFF;
+    --hueco:#E4E5E9;
+    --tinta:#16181C;
+    --tinta-2:#4A4F58;
+    --apagado:#71767F;
+    --filete:#D8DADF;
+    --filete-suave:#E8E9EC;
+    --acento:#0E6C7A;
+
     --ok:#0E7C4A;
     --warn:#C77F0A;
     --crit:#C0392B;
@@ -32,23 +43,23 @@
     --crit-suave:#FAE7E4;
     --unk-suave:#ECEFF2;
 
-    --display:"Archivo","Helvetica Neue",Arial,sans-serif;
-    --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+    --display:"Bricolage Grotesque","Archivo","Helvetica Neue",Arial,sans-serif;
+    --texto:"Source Sans 3","Segoe UI",system-ui,sans-serif;
     --mono:"JetBrains Mono","SF Mono",Consolas,monospace;
-    --sombra:0 1px 2px rgba(20,40,60,.05), 0 10px 30px -18px rgba(20,40,60,.35);
-    --radio:10px;
+    --radio:12px;
+    --sombra:0 1px 1px rgba(20,24,32,.04), 0 14px 34px -22px rgba(20,24,32,.45);
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --ground:#0D1218;
-      --surface:#161E26;
-      --sunk:#1D262F;
-      --ink:#E8EDF2;
-      --ink-2:#B4C0CB;
-      --muted:#8896A3;
-      --line:#26313B;
-      --line-soft:#1F2831;
-      --accent:#6FBED6;
+      --papel:#131417;
+      --tabla:#1A1C21;
+      --hueco:#23262C;
+      --tinta:#ECEDEF;
+      --tinta-2:#B6BAC2;
+      --apagado:#868C96;
+      --filete:#2B2F36;
+      --filete-suave:#22252B;
+      --acento:#58B0BE;
 
       --ok:#1B9764;
       --warn:#AF9207;
@@ -59,155 +70,249 @@
       --crit-suave:#2A1A1D;
       --unk-suave:#1C242C;
 
-      --sombra:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -18px rgba(0,0,0,.8);
+      --sombra:0 1px 1px rgba(0,0,0,.5), 0 14px 34px -22px rgba(0,0,0,.9);
     }
   }
 
   *{box-sizing:border-box}
   html,body{margin:0}
-  body{background:var(--ground);color:var(--ink);font-family:var(--body);
-    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:960px;margin:0 auto;padding:0 20px 72px}
-  a{color:var(--accent)}
-  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+  body{background:var(--papel);color:var(--tinta);font-family:var(--texto);
+    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility}
+  .hoja{max-width:1080px;margin:0 auto;padding:0 22px 80px}
+  a{color:var(--acento);text-underline-offset:2px}
+  :focus-visible{outline:2px solid var(--acento);outline-offset:3px;border-radius:4px}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 
-  /* ── cabecera ───────────────────────────────────────────── */
-  .barra{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;
-    justify-content:space-between;padding:26px 0 18px}
-  .marca{font-family:var(--display);font-weight:600;font-size:1.02rem;letter-spacing:-.01em}
-  .sello{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
-    color:var(--muted)}
+  /* ── cabecera ─────────────────────────────────────────────────────── */
+  .cabecera{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;
+    justify-content:space-between;padding:24px 0 20px;
+    border-bottom:1px solid var(--filete)}
+  .marca{display:flex;align-items:baseline;gap:11px;min-width:0}
+  .marca b{font-family:var(--display);font-weight:800;font-size:1.12rem;
+    letter-spacing:-.025em;font-variation-settings:"opsz" 20}
+  .marca span{font-size:.88rem;color:var(--apagado)}
+  .sello{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);
+    font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--apagado)}
+  .latido{width:7px;height:7px;border-radius:50%;background:var(--apagado);flex:none;
+    animation:latir 3.4s ease-in-out infinite}
+  @keyframes latir{0%,100%{opacity:.35}50%{opacity:1}}
 
-  /* ── titular grande ─────────────────────────────────────── */
-  .titular{background:var(--surface);border:1px solid var(--line);border-radius:var(--radio);
-    box-shadow:var(--sombra);padding:26px 28px;display:flex;flex-wrap:wrap;gap:18px;
-    align-items:center;justify-content:space-between;
-    border-left:5px solid var(--unk)}
-  .titular.t-ok{border-left-color:var(--ok);background:linear-gradient(90deg,var(--ok-suave),var(--surface) 42%)}
-  .titular.t-degradado{border-left-color:var(--warn);background:linear-gradient(90deg,var(--warn-suave),var(--surface) 42%)}
-  .titular.t-caido{border-left-color:var(--crit);background:linear-gradient(90deg,var(--crit-suave),var(--surface) 42%)}
-  .titular.t-unk{border-left-color:var(--unk);background:linear-gradient(90deg,var(--unk-suave),var(--surface) 42%)}
-  .titular .texto{display:flex;align-items:center;gap:14px;min-width:0}
-  .foco{width:16px;height:16px;border-radius:50%;flex:none;background:var(--unk)}
-  .t-ok .foco{background:var(--ok)} .t-degradado .foco{background:var(--warn)}
-  .t-caido .foco{background:var(--crit)} .t-unk .foco{background:var(--unk)}
-  #titular-texto{font-family:var(--display);font-weight:700;font-size:clamp(1.45rem,4vw,2rem);
-    letter-spacing:-.02em;margin:0;line-height:1.12;text-wrap:balance}
-  #titular-sub{margin:3px 0 0;font-size:.94rem;color:var(--ink-2)}
+  /* ── veredicto ────────────────────────────────────────────────────── */
+  .veredicto{padding:38px 0 30px;border-bottom:1px solid var(--filete);
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:26px;align-items:end}
+  .veredicto h1{font-family:var(--display);font-weight:800;
+    font-size:clamp(2.1rem,6.4vw,3.9rem);line-height:1.02;letter-spacing:-.035em;
+    margin:0;text-wrap:balance;font-variation-settings:"opsz" 60;
+    color:var(--apagado)}
+  .v-ok h1{color:var(--ok)} .v-degradado h1{color:var(--warn)}
+  .v-caido h1{color:var(--crit)} .v-unk h1{color:var(--apagado)}
+  .veredicto p{margin:10px 0 0;font-size:1.02rem;color:var(--tinta-2);max-width:56ch}
+  .recuento{display:flex;gap:22px;flex-wrap:wrap}
+  .cuenta{text-align:right;min-width:62px}
+  .cuenta b{display:block;font-family:var(--mono);font-weight:700;font-size:1.9rem;
+    line-height:1;font-variant-numeric:tabular-nums}
+  .cuenta span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--apagado);margin-top:7px;
+    border-top:2px solid currentColor;padding-top:6px}
+  .c-operativo b,.c-operativo span{color:var(--ok)}
+  .c-degradado b,.c-degradado span{color:var(--warn)}
+  .c-caido b,.c-caido span{color:var(--crit)}
+  .c-desconocido b,.c-desconocido span{color:var(--apagado)}
 
-  .cuentas{display:flex;flex-wrap:wrap;gap:8px}
-  .cuenta{display:inline-flex;align-items:center;gap:7px;background:var(--sunk);
-    border:1px solid var(--line);border-radius:999px;padding:5px 12px;
-    font-size:.86rem;color:var(--ink-2);white-space:nowrap}
-  .cuenta b{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink)}
-  .punto{width:9px;height:9px;border-radius:50%;flex:none}
-  .p-operativo{background:var(--ok)} .p-degradado{background:var(--warn)}
-  .p-caido{background:var(--crit)} .p-desconocido{background:var(--unk)}
+  /* ── tira de un vistazo ───────────────────────────────────────────── */
+  .tira{display:grid;grid-template-columns:repeat(auto-fill,minmax(126px,1fr));
+    gap:6px;padding:18px 0 26px}
+  .tira a{text-decoration:none;color:inherit;background:var(--tabla);
+    border:1px solid var(--filete);border-radius:7px;padding:9px 10px 8px;
+    display:block;min-width:0;transition:border-color .14s ease,transform .14s ease}
+  .tira a:hover{border-color:var(--acento);transform:translateY(-1px)}
+  .tira .bandera{height:4px;border-radius:2px;background:var(--unk);margin-bottom:8px}
+  .tira .b-operativo{background:var(--ok)} .tira .b-degradado{background:var(--warn)}
+  .tira .b-caido{background:var(--crit)} .tira .b-desconocido{background:var(--unk)}
+  .tira .rotulo{font-size:.79rem;font-weight:500;color:var(--tinta-2);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 
-  /* ── grupos y filas ─────────────────────────────────────── */
-  .grupo{margin-top:34px}
-  .grupo > h2{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--muted);margin:0 0 10px;padding-left:2px}
-  .filas{background:var(--surface);border:1px solid var(--line);border-radius:var(--radio);
+  /* ── grupos ───────────────────────────────────────────────────────── */
+  .grupo{margin-top:30px}
+  .grupo > h2{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--apagado);margin:0 0 11px;
+    display:flex;align-items:center;gap:12px}
+  .grupo > h2::after{content:"";flex:1;height:1px;background:var(--filete)}
+  .filas{background:var(--tabla);border:1px solid var(--filete);border-radius:var(--radio);
     box-shadow:var(--sombra);overflow:hidden}
-  .fila{padding:16px 20px;border-bottom:1px solid var(--line-soft);
-    display:grid;grid-template-columns:1fr;gap:11px}
+
+  .fila{display:grid;grid-template-columns:112px minmax(0,1fr);
+    border-bottom:1px solid var(--filete-suave)}
   .fila:last-child{border-bottom:0}
+  .fila:target{background:var(--hueco)}
+
+  /* La espina: procedencia del dato. El trazo del filete la distingue sin
+     depender del color, y al apilarse las filas dibuja una línea continua. */
+  .espina{padding:19px 14px;border-right:2px solid var(--filete);
+    display:flex;align-items:center;justify-content:flex-end;text-align:right}
+  .espina .qué{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--apagado);display:block}
+  .e-oficial .espina{border-right-style:solid}
+  .e-externa .espina{border-right-style:dashed}
+  .e-propia  .espina{border-right-style:dotted;border-right-width:3px}
+  .e-persona .espina{border-right-style:double;border-right-width:4px}
+  .e-oficial .espina .qué{color:var(--tinta-2)}
+
+  .cuerpo{padding:19px 20px;display:grid;gap:10px;min-width:0}
   .fila.caido{background:var(--crit-suave)}
 
-  .fila .cabeza{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .fila .nombre{font-family:var(--display);font-weight:600;font-size:1.06rem;letter-spacing:-.008em}
-  .fila .marca-manual{font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;
-    text-transform:uppercase;color:var(--muted);border:1px solid var(--line);
-    border-radius:3px;padding:2px 6px}
-  .fila .derecha{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .cabeza{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
+  .nombre{font-family:var(--display);font-weight:700;font-size:1.09rem;
+    letter-spacing:-.018em;font-variation-settings:"opsz" 16}
+  .apunte{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--apagado);border:1px solid var(--filete);border-radius:3px;padding:2px 6px;
+    align-self:center}
+  .derecha{margin-left:auto;display:flex;align-items:center;gap:14px}
   .pastilla{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);
-    font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
-    border-radius:999px;padding:4px 11px;white-space:nowrap}
+    font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    border-radius:999px;padding:4px 12px;white-space:nowrap}
   .s-operativo{background:var(--ok-suave);color:var(--ok)}
   .s-degradado{background:var(--warn-suave);color:var(--warn)}
   .s-caido{background:var(--crit-suave);color:var(--crit)}
-  .s-desconocido{background:var(--unk-suave);color:var(--muted)}
-  .uptime{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;
-    color:var(--muted);white-space:nowrap}
+  .s-desconocido{background:var(--unk-suave);color:var(--apagado)}
+  .punto{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
+  .p-operativo{background:var(--ok)} .p-degradado{background:var(--warn)}
+  .p-caido{background:var(--crit)} .p-desconocido{background:var(--unk)}
+  .cifra{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;
+    color:var(--apagado);white-space:nowrap}
 
-  .mensaje{font-size:.9rem;color:var(--ink-2);margin:-4px 0 0;overflow-wrap:anywhere}
+  .mensaje{font-size:.9rem;color:var(--tinta-2);margin:-3px 0 0;overflow-wrap:anywhere}
   .mensaje a{text-decoration:none}
   .mensaje a:hover{text-decoration:underline}
 
-  /* ── barra de 72 horas ──────────────────────────────────── */
-  .barra-horas{display:flex;gap:2px;height:30px;align-items:stretch}
-  .seg{flex:1 1 0;min-width:0;border-radius:2px;background:var(--unk-suave);
+  /* ── 72 horas, partidas en tres días ──────────────────────────────── */
+  .horas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .dia{min-width:0}
+  .segs{display:flex;gap:2px;height:24px}
+  .seg{flex:1 1 0;min-width:0;border-radius:2px;background:var(--hueco);
     transition:transform .12s ease}
-  .seg:hover{transform:scaleY(1.14)}
-  .seg.h-o{background:var(--ok)}
-  .seg.h-d{background:var(--warn)}
-  .seg.h-c{background:var(--crit)}
-  .seg.h-u{background:var(--unk)}
-  .seg.h-vacio{background:var(--sunk)}
-  .escala{display:flex;justify-content:space-between;font-family:var(--mono);
-    font-size:10px;letter-spacing:.07em;color:var(--muted);margin-top:-4px}
+  .seg:hover{transform:scaleY(1.2)}
+  .h-o{background:var(--ok)} .h-d{background:var(--warn)}
+  .h-c{background:var(--crit)} .h-u{background:var(--unk)}
 
-  /* ── pie ────────────────────────────────────────────────── */
-  .leyenda{display:flex;flex-wrap:wrap;gap:9px 22px;margin-top:20px;
-    font-size:.87rem;color:var(--muted)}
-  .leyenda span{display:flex;align-items:center;gap:8px}
+  /* La escala va una sola vez por grupo, alineada con las barras de arriba:
+     repetirla en cada fila era 13 veces el mismo rótulo. */
+  .escala{display:grid;grid-template-columns:112px minmax(0,1fr);
+    border-top:1px solid var(--filete-suave);background:var(--hueco)}
+  .escala .hueco-espina{border-right:2px solid var(--filete)}
+  .escala .horas{padding:7px 20px 8px}
+  .escala .dia{display:flex;justify-content:space-between;gap:8px;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--apagado)}
 
-  .nota{margin-top:22px;background:var(--surface);border:1px solid var(--line);
-    border-left:3px solid var(--accent);border-radius:var(--radio);
-    padding:17px 21px;font-size:.91rem;color:var(--ink-2)}
-  .nota strong{color:var(--ink);font-weight:600}
-  .nota code{font-family:var(--mono);font-size:.85em;background:var(--sunk);
-    padding:.12em .4em;border-radius:4px;border:1px solid var(--line-soft)}
+  /* ── leyendas y nota ──────────────────────────────────────────────── */
+  .leyendas{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));
+    gap:14px;margin-top:32px}
+  .leyenda{background:var(--tabla);border:1px solid var(--filete);border-radius:var(--radio);
+    padding:16px 18px}
+  .leyenda h3{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.13em;
+    text-transform:uppercase;color:var(--apagado);margin:0 0 11px}
+  .leyenda ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .leyenda li{display:flex;align-items:flex-start;gap:10px;font-size:.86rem;
+    color:var(--tinta-2)}
+  .leyenda li i{margin-top:6px;flex:none}
+  .leyenda li b{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--tinta-2);flex:none;width:62px;padding-top:3px}
+  .trazo{width:20px;flex:none;margin-top:9px;border-top:2px solid var(--tinta-2)}
+  .t-oficial{border-top-style:solid}
+  .t-externa{border-top-style:dashed}
+  .t-propia{border-top-style:dotted;border-top-width:3px}
+  .t-persona{border-top-style:double;border-top-width:4px}
 
-  footer{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);
-    font-size:.85rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 24px}
+  .aclaracion{margin-top:14px;background:var(--tabla);border:1px solid var(--filete);
+    border-left:3px solid var(--acento);border-radius:var(--radio);padding:18px 22px;
+    font-size:.91rem;color:var(--tinta-2)}
+  .aclaracion strong{color:var(--tinta);font-weight:600}
+  .aclaracion p{margin:0}
+  .aclaracion p + p{margin-top:9px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--hueco);
+    padding:.12em .42em;border-radius:4px;border:1px solid var(--filete-suave)}
 
-  @media (max-width:620px){
-    .fila{padding:14px 16px}
-    .fila .derecha{margin-left:0;width:100%}
-    .barra-horas{height:26px;gap:1px}
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--filete);
+    font-size:.85rem;color:var(--apagado);display:flex;flex-wrap:wrap;gap:8px 26px}
+
+  @media (max-width:760px){
+    .veredicto{grid-template-columns:1fr;align-items:start;gap:22px;padding-top:30px}
+    .recuento{gap:18px}
+    .cuenta{text-align:left}
+    .fila{grid-template-columns:1fr}
+    .espina{justify-content:flex-start;text-align:left;padding:12px 16px 0;
+      border-right:0;border-left:4px solid var(--filete)}
+    .e-oficial .espina{border-left-style:solid}
+    .e-externa .espina{border-left-style:dashed}
+    .e-propia  .espina{border-left-style:dotted}
+    .e-persona .espina{border-left-style:double}
+    .cuerpo{padding:10px 16px 16px}
+    /* En móvil las 72 h siguen en una línea: apiladas, cada fila medía tres
+       veces lo mismo y la página se hacía interminable. */
+    .horas{gap:6px}
+    .segs{gap:1px;height:22px}
+    .escala{display:none}
+    .derecha{margin-left:0;width:100%}
   }
   @media (prefers-reduced-motion:reduce){
-    .seg{transition:none}
-    .seg:hover{transform:none}
+    *{animation:none!important}
+    .seg,.tira a{transition:none}
+    .seg:hover{transform:none} .tira a:hover{transform:none}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="hoja">
 
-  <div class="barra">
-    <span class="marca">Estado de servicios</span>
-    <span class="sello" id="sello">Cargando…</span>
-  </div>
+  <header class="cabecera">
+    <span class="marca"><b>Estado de servicios</b><span>de los que dependemos</span></span>
+    <span class="sello"><i class="latido" aria-hidden="true"></i><span id="sello">Cargando…</span></span>
+  </header>
 
-  <section class="titular t-unk" id="titular" aria-live="polite">
-    <div class="texto">
-      <span class="foco" aria-hidden="true"></span>
-      <div>
-        <p id="titular-texto">Cargando…</p>
-        <p id="titular-sub">Leyendo el último estado publicado</p>
-      </div>
+  <section class="veredicto v-unk" id="veredicto" aria-live="polite">
+    <div>
+      <h1 id="veredicto-texto">Cargando…</h1>
+      <p id="veredicto-sub">Leyendo el último estado publicado.</p>
     </div>
-    <div class="cuentas" id="cuentas"></div>
+    <div class="recuento" id="recuento"></div>
   </section>
+
+  <nav class="tira" id="tira" aria-label="Todos los indicadores"></nav>
 
   <main id="grupos"></main>
 
-  <div class="leyenda">
-    <span><i class="punto p-operativo"></i>Operativo</span>
-    <span><i class="punto p-degradado"></i>Degradado o mantenimiento</span>
-    <span><i class="punto p-caido"></i>Caído</span>
-    <span><i class="punto p-desconocido"></i>No se pudo leer la fuente</span>
+  <div class="leyendas">
+    <section class="leyenda">
+      <h3>Qué dice cada luz</h3>
+      <ul>
+        <li><i class="punto p-operativo"></i><span>El proveedor no declara ninguna incidencia.</span></li>
+        <li><i class="punto p-degradado"></i><span>Degradado, incidencia parcial o mantenimiento en curso.</span></li>
+        <li><i class="punto p-caido"></i><span>Caída declarada o detectada.</span></li>
+        <li><i class="punto p-desconocido"></i><span>No se pudo leer la fuente. No es verde: es que no se sabe.</span></li>
+      </ul>
+    </section>
+    <section class="leyenda">
+      <h3>De dónde sale el dato</h3>
+      <ul>
+        <li><i class="trazo t-oficial"></i><b>Oficial</b><span>Lo publica el propio proveedor.</span></li>
+        <li><i class="trazo t-externa"></i><b>Externa</b><span>Lo mide un tercero independiente, no el proveedor.</span></li>
+        <li><i class="trazo t-propia"></i><b>Propia</b><span>Lo comprobamos nosotros con una sonda.</span></li>
+        <li><i class="trazo t-persona"></i><b>Persona</b><span>Lo marcó alguien a mano en una issue.</span></li>
+      </ul>
+    </section>
   </div>
 
-  <div class="nota">
-    <strong>Telefonía y energía no se detectan solas.</strong> No existe API de operadoras
-    ni de distribuidoras eléctricas: esas tres luces solo se encienden si alguien las marca.
-    Para hacerlo, abre una issue con la etiqueta <code>caida:vodafone</code>
-    (o <code>caida:telefonica</code>, <code>caida:energia</code>) y ciérrala al resolverse.
-    El panel se actualiza al momento.
+  <div class="aclaracion">
+    <p><strong>Un verde no vale lo mismo según de dónde venga.</strong> Un verde
+    <em>oficial</em> significa que el proveedor no ha declarado nada. Uno <em>externo</em>,
+    que quien mide la red no ve caída — puede haber degradación sin que se note fuera. Uno
+    <em>propio</em>, solo que nuestra sonda llegó. Y uno <em>de persona</em>, únicamente que
+    nadie ha marcado avería todavía.</p>
+    <p>Para marcar a mano una avería, abre una issue con la etiqueta <code>caida:energia</code>
+    y ciérrala al resolverse: el panel se actualiza al momento.</p>
   </div>
 
   <footer>
@@ -220,12 +325,23 @@
 
 <script>
 const HORAS = 72;
+const POR_DIA = 24;
 
 const ETIQUETA = {
   operativo:   "Operativo",
   degradado:   "Degradado",
   caido:       "Caído",
   desconocido: "Sin datos"
+};
+
+// Cómo se ha sabido cada estado. Es el eje del panel, no una etiqueta más:
+// determina la columna izquierda de cada fila y el trazo de su filete.
+const EVIDENCIA = {
+  oficial: {rotulo: "Oficial", quien: "lo publica el proveedor"},
+  externa: {rotulo: "Externa", quien: "lo mide un tercero"},
+  propia:  {rotulo: "Propia",  quien: "sonda nuestra"},
+  persona: {rotulo: "Persona", quien: "marcado a mano"},
+  otra:    {rotulo: "Otra",    quien: "origen sin clasificar"}
 };
 
 const GRUPOS = [
@@ -253,156 +369,210 @@ function crear(etiqueta, clase, texto) {
   return el;
 }
 
-// Barra de 72 horas: la más reciente a la derecha. Las horas sin registro se
-// dibujan en hueco, para no hacer pasar por "operativo" lo que no se midió.
-function barraHoras(historial) {
-  const barra = crear("div", "barra-horas");
-  barra.setAttribute("role", "img");
+function enlace(texto, url) {
+  const a = crear("a", null, texto);
+  a.href = url; a.target = "_blank"; a.rel = "noopener";
+  return a;
+}
+
+// Las 72 horas van partidas en tres bloques de 24: así se lee "ayer" y
+// "anteayer" de un golpe en vez de contar celdas. Las horas sin registro quedan
+// huecas, para no hacer pasar por operativo lo que sencillamente no se midió.
+function tiraHoras(historial) {
+  const caja = crear("div", "horas");
   const letras = (historial || "").slice(-HORAS).padStart(HORAS, " ");
   const ahora = Date.now();
+  let medidas = 0;
 
-  for (let i = 0; i < HORAS; i++) {
-    const letra = letras[i];
-    const estado = LETRAS[letra];
-    const seg = crear("div", "seg " + (estado ? "h-" + letra : "h-vacio"));
-    const horasAtras = HORAS - 1 - i;
-    const cuando = new Date(ahora - horasAtras * 3600000);
-    const hora = cuando.toLocaleString("es-ES", {day: "2-digit", month: "short", hour: "2-digit"});
-    seg.title = `${hora} — ${estado ? ETIQUETA[estado] : "sin registro"}`;
-    barra.append(seg);
+  for (let bloque = 0; bloque < HORAS / POR_DIA; bloque++) {
+    const dia = crear("div", "dia");
+    const segs = crear("div", "segs");
+    segs.setAttribute("role", "img");
+
+    for (let j = 0; j < POR_DIA; j++) {
+      const i = bloque * POR_DIA + j;
+      const estado = LETRAS[letras[i]];
+      if (estado) medidas++;
+      const horasAtras = HORAS - 1 - i;
+      const seg = crear("div", "seg" + (estado ? " h-" + letras[i] : ""));
+      const cuando = new Date(ahora - horasAtras * 3600000);
+      const sello = cuando.toLocaleString("es-ES", {day: "2-digit", month: "short", hour: "2-digit"});
+      seg.title = `${sello} — ${estado ? ETIQUETA[estado] : "sin registro"}`;
+      segs.append(seg);
+    }
+
+    const desde = HORAS - bloque * POR_DIA;
+    segs.setAttribute("aria-label", `De hace ${desde} a hace ${desde - POR_DIA} horas`);
+    dia.append(segs);
+    caja.append(dia);
   }
 
-  const medidas = [...letras].filter(l => LETRAS[l]).length;
-  barra.setAttribute("aria-label", `Últimas ${HORAS} horas: ${medidas} con registro`);
-  return barra;
+  caja.setAttribute("aria-label", `Últimas ${HORAS} horas: ${medidas} con registro`);
+  return caja;
 }
 
 function fila(s) {
-  const el = crear("article", "fila" + (s.estado === "caido" ? " caido" : ""));
+  const ev = EVIDENCIA[s.evidencia] || EVIDENCIA.otra;
+  const el = crear("article", `fila e-${s.evidencia || "otra"}` + (s.estado === "caido" ? " caido" : ""));
+  el.id = "i-" + s.id;
+
+  const espina = crear("div", "espina");
+  espina.title = `${ev.rotulo}: ${ev.quien}`;
+  espina.append(crear("span", "qué", ev.rotulo));
+
+  const cuerpo = crear("div", "cuerpo");
 
   const cabeza = crear("div", "cabeza");
   cabeza.append(crear("span", "nombre", s.nombre));
-  if (s.manual) cabeza.append(crear("span", "marca-manual", "manual"));
   if (s.limitado) {
     // La lectura no viene del proveedor sino de una comprobación nuestra:
     // hay que verlo, para no confundirla con un estado oficial.
-    const et = crear("span", "marca-manual", "indirecto");
-    et.title = "Señal indirecta, no el estado oficial del proveedor. "
-             + "Detecta caídas grandes, no problemas locales ni degradaciones parciales.";
+    const et = crear("span", "apunte", "señal indirecta");
+    et.title = "Detecta caídas grandes, no problemas locales ni degradaciones parciales.";
     cabeza.append(et);
   }
 
   const derecha = crear("div", "derecha");
   const pastilla = crear("span", "pastilla s-" + s.estado);
-  pastilla.append(crear("i", "punto p-" + s.estado), document.createTextNode(ETIQUETA[s.estado] || s.estado));
+  pastilla.append(crear("i", "punto p-" + s.estado),
+                  document.createTextNode(ETIQUETA[s.estado] || s.estado));
   derecha.append(pastilla);
 
-  const up = crear("span", "uptime");
+  const cifra = crear("span", "cifra");
   if (s.disponibilidad === null || s.disponibilidad === undefined) {
-    up.textContent = "sin histórico";
-    up.title = "Aún no hay suficientes horas registradas para calcular la disponibilidad";
+    cifra.textContent = "sin histórico";
+    cifra.title = "Aún no hay suficientes horas registradas para calcular la disponibilidad";
   } else {
-    up.textContent = s.disponibilidad.toFixed(1).replace(".", ",") + " % · 7 d";
-    up.title = "Horas operativas sobre las horas con lectura concluyente en los últimos 7 días. "
-             + "Las horas sin datos no cuentan: se ven en la barra, en gris.";
+    cifra.textContent = s.disponibilidad.toFixed(1).replace(".", ",") + " % · 7 d";
+    cifra.title = "Horas operativas sobre las horas con lectura concluyente en los últimos 7 días. "
+                + "Las horas sin datos no cuentan: se ven huecas en la barra.";
   }
-  derecha.append(up);
+  derecha.append(cifra);
   cabeza.append(derecha);
 
   const mensaje = crear("p", "mensaje");
   const texto = s.mensaje || s.detalle || "";
   mensaje.append(document.createTextNode(texto));
+  if (s.estado !== "operativo" && s.desde) {
+    mensaje.append(crear("span", "cifra", (texto ? " · " : "") + "desde " + hace(s.desde)));
+  }
   if (s.url) {
-    const a = crear("a", null, s.manual ? "ver issue" : "página oficial");
-    a.href = s.url; a.target = "_blank"; a.rel = "noopener";
-    mensaje.append(document.createTextNode(texto ? " · " : ""), a);
+    mensaje.append(document.createTextNode(" · "),
+                   enlace(s.manual ? "ver issue" : "página oficial", s.url));
   }
   // En los indicadores sin fuente pública, marcar la avería tiene que ser un
   // clic: si hay que acordarse de abrir una issue y etiquetarla, no se hace.
   if (s.manual && s.marcar_url && s.estado !== "caido") {
-    const a = crear("a", null, "marcar avería");
-    a.href = s.marcar_url; a.target = "_blank"; a.rel = "noopener";
-    mensaje.append(document.createTextNode(" · "), a);
+    mensaje.append(document.createTextNode(" · "), enlace("marcar avería", s.marcar_url));
   }
 
-  const escala = crear("div", "escala");
-  escala.append(crear("span", null, "hace 72 h"),
-                crear("span", null, s.estado !== "operativo" && s.desde ? "desde " + hace(s.desde) : ""),
-                crear("span", null, "ahora"));
-
-  el.append(cabeza, mensaje, barraHoras(s.historial), escala);
+  cuerpo.append(cabeza, mensaje, tiraHoras(s.historial));
+  el.append(espina, cuerpo);
   return el;
+}
+
+// Pie de escala del grupo: comparte la rejilla de las filas, así que sus
+// rótulos caen justo debajo de los bloques de 24 h a los que se refieren.
+function escalaHoras() {
+  const pie = crear("div", "escala");
+  pie.append(crear("div", "hueco-espina"));
+  const horas = crear("div", "horas");
+  for (let bloque = 0; bloque < HORAS / POR_DIA; bloque++) {
+    const desde = HORAS - bloque * POR_DIA;
+    const dia = crear("div", "dia");
+    dia.append(crear("span", null, `hace ${desde} h`));
+    if (bloque === HORAS / POR_DIA - 1) dia.append(crear("span", null, "ahora"));
+    horas.append(dia);
+  }
+  pie.append(horas);
+  return pie;
+}
+
+function pintarTira(servicios) {
+  const tira = document.getElementById("tira");
+  tira.replaceChildren();
+  for (const s of servicios) {
+    const a = crear("a");
+    a.href = "#i-" + s.id;
+    a.title = `${s.nombre}: ${ETIQUETA[s.estado] || s.estado}`;
+    a.append(crear("div", "bandera b-" + s.estado), crear("span", "rotulo", s.nombre));
+    tira.append(a);
+  }
 }
 
 function pintar(datos) {
   const contenedor = document.getElementById("grupos");
   contenedor.replaceChildren();
 
-  for (const [clave, titulo] of GRUPOS) {
-    const dentro = datos.servicios.filter(s => s.categoria === clave);
-    if (!dentro.length) continue;
+  const pintados = new Set();
+  const bloque = (titulo, dentro) => {
     const grupo = crear("section", "grupo");
     grupo.append(crear("h2", null, titulo));
     const filas = crear("div", "filas");
-    filas.append(...dentro.map(fila));
+    filas.append(...dentro.map(fila), escalaHoras());
     grupo.append(filas);
     contenedor.append(grupo);
-  }
+  };
 
-  const sueltos = datos.servicios.filter(s => !GRUPOS.some(([c]) => c === s.categoria));
-  if (sueltos.length) {
-    const grupo = crear("section", "grupo");
-    grupo.append(crear("h2", null, "Otros"));
-    const filas = crear("div", "filas");
-    filas.append(...sueltos.map(fila));
-    grupo.append(filas);
-    contenedor.append(grupo);
+  for (const [clave, titulo] of GRUPOS) {
+    const dentro = datos.servicios.filter(s => s.categoria === clave);
+    if (!dentro.length) continue;
+    dentro.forEach(s => pintados.add(s));
+    bloque(titulo, dentro);
   }
+  const sueltos = datos.servicios.filter(s => !pintados.has(s));
+  if (sueltos.length) bloque("Otros", sueltos);
 
-  // Titular. Nunca decir "todo operativo" cuando en realidad no se ha podido
+  pintarTira(datos.servicios);
+
+  // Veredicto. Nunca decir "todo operativo" cuando en realidad no se ha podido
   // comprobar: un panel en verde por no haber leído las fuentes miente.
   const cuenta = e => datos.servicios.filter(s => s.estado === e).length;
   const caidos = cuenta("caido"), degradados = cuenta("degradado"),
         sinDatos = cuenta("desconocido"), operativos = cuenta("operativo");
 
-  const titular = document.getElementById("titular");
-  const texto = document.getElementById("titular-texto");
-  const sub = document.getElementById("titular-sub");
+  const veredicto = document.getElementById("veredicto");
+  const texto = document.getElementById("veredicto-texto");
+  const sub = document.getElementById("veredicto-sub");
   const rotos = datos.servicios.filter(s => s.estado === "caido").map(s => s.nombre);
+  const flojos = datos.servicios.filter(s => s.estado === "degradado").map(s => s.nombre);
+  const ciegos = datos.servicios.filter(s => s.estado === "desconocido").map(s => s.nombre);
 
   let clase;
   if (caidos) {
-    clase = "t-caido";
+    clase = "v-caido";
     texto.textContent = caidos === 1 ? `${rotos[0]} está caído` : `${caidos} servicios caídos`;
-    sub.textContent = caidos === 1 ? "Comprobado contra la página oficial del proveedor" : rotos.join(" · ");
+    sub.textContent = caidos === 1
+      ? "El resto responde con normalidad."
+      : rotos.join(" · ");
   } else if (degradados) {
-    clase = "t-degradado";
-    texto.textContent = degradados === 1 ? "1 servicio degradado" : `${degradados} servicios degradados`;
-    sub.textContent = "Ninguna caída declarada";
+    clase = "v-degradado";
+    texto.textContent = degradados === 1 ? `${flojos[0]} va degradado` : `${degradados} servicios degradados`;
+    sub.textContent = "Ninguna caída declarada. " + flojos.join(" · ");
   } else if (sinDatos === datos.servicios.length) {
-    clase = "t-unk";
+    clase = "v-unk";
     texto.textContent = "Sin datos";
-    sub.textContent = "No se ha podido leer ninguna fuente";
+    sub.textContent = "No se ha podido leer ninguna fuente.";
   } else if (sinDatos) {
-    clase = "t-unk";
+    clase = "v-unk";
     texto.textContent = "Todo operativo, con reservas";
-    sub.textContent = `${sinDatos} ${sinDatos === 1 ? "fuente ilegible" : "fuentes ilegibles"}: ese estado no se ha comprobado`;
+    sub.textContent = `${sinDatos} ${sinDatos === 1 ? "fuente ilegible" : "fuentes ilegibles"}`
+      + ` (${ciegos.join(", ")}): ese estado no se ha comprobado.`;
   } else {
-    clase = "t-ok";
+    clase = "v-ok";
     texto.textContent = "Todo operativo";
-    sub.textContent = `${operativos} servicios comprobados`;
+    sub.textContent = `${operativos} indicadores comprobados, ninguna incidencia declarada.`;
   }
-  titular.className = "titular " + clase;
+  veredicto.className = "veredicto " + clase;
 
-  const cuentas = document.getElementById("cuentas");
-  cuentas.replaceChildren();
-  for (const [estado, n] of [["operativo", operativos], ["degradado", degradados],
-                             ["caido", caidos], ["desconocido", sinDatos]]) {
+  const recuento = document.getElementById("recuento");
+  recuento.replaceChildren();
+  for (const [estado, n] of [["caido", caidos], ["degradado", degradados],
+                             ["desconocido", sinDatos], ["operativo", operativos]]) {
     if (!n) continue;
-    const chip = crear("span", "cuenta");
-    chip.append(crear("i", "punto p-" + estado), crear("b", null, String(n)),
-                document.createTextNode(ETIQUETA[estado].toLowerCase()));
-    cuentas.append(chip);
+    const c = crear("div", "cuenta c-" + estado);
+    c.append(crear("b", null, String(n)), crear("span", null, ETIQUETA[estado]));
+    recuento.append(c);
   }
 
   document.getElementById("sello").textContent = "Comprobado " + hace(datos.generado_en);
@@ -416,8 +586,8 @@ async function cargar() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     pintar(await r.json());
   } catch (e) {
-    document.getElementById("titular-texto").textContent = "No se pudo cargar el estado";
-    document.getElementById("titular-sub").textContent = String(e.message || e);
+    document.getElementById("veredicto-texto").textContent = "No se pudo cargar el estado";
+    document.getElementById("veredicto-sub").textContent = String(e.message || e);
   }
 }
 

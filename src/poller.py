@@ -40,6 +40,24 @@ ESTADO_DE_LETRA = {v: k for k, v in LETRA.items()}
 HORAS_GUARDADAS = 168   # 7 días: la ventana del porcentaje
 HORAS_VISIBLES = 72     # 3 días: lo que se dibuja en la barra
 
+# De dónde viene cada lectura. Es la distinción que más importa de este panel:
+# no es lo mismo que lo diga el proveedor, que lo mida un tercero, que lo
+# comprobemos nosotros o que lo haya escrito una persona. El panel lo enseña.
+EVIDENCIA = {
+    "statuspage": "oficial",
+    "rss": "oficial",
+    "json": "oficial",
+    "graph": "oficial",
+    "google": "oficial",
+    "ree": "oficial",
+    "m365": "oficial",     # con credenciales; sin ellas cae a sonda propia
+    "ioda": "externa",
+    "http": "propia",
+    "latido": "propia",
+    "manual": "persona",
+}
+
+
 # Vocabulario de Statuspage -> el nuestro. `under_maintenance` cae en degradado:
 # se ve en el panel, pero como las alertas solo saltan con `caido`, nunca avisa.
 COMPONENTE = {
@@ -56,6 +74,18 @@ INDICADOR = {
     "critical": "caido",
     "maintenance": "degradado",
 }
+
+
+def evidencia_de(tipo: str | None, lectura: "Lectura") -> str:
+    """Qué clase de prueba hay detrás de esta lectura.
+
+    Microsoft 365 es el caso especial: con credenciales de Entra ID el dato es
+    oficial, y sin ellas cae a una comprobación nuestra. La lectura ya viene
+    marcada como limitada, así que basta con mirarla.
+    """
+    if tipo == "m365" and lectura.limitado:
+        return "propia"
+    return EVIDENCIA.get(tipo or "", "otra")
 
 
 def ahora() -> datetime:
@@ -965,6 +995,7 @@ def main() -> int:
                 "desde": nuevo_estado[sid]["desde"],
                 "categoria": servicio.get("categoria", "otros"),
                 "limitado": lectura.limitado,
+                "evidencia": evidencia_de(servicio["fuente"].get("tipo"), lectura),
                 "historial": horas[-HORAS_VISIBLES:],
                 "disponibilidad": disponibilidad(horas),
                 "manual": servicio["fuente"].get("tipo") == "manual",
