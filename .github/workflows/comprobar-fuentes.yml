@@ -12,6 +12,10 @@ on:
         description: "URLs a sondear, separadas por espacios (vacío = las del panel)"
         required: false
         default: ""
+      indicador:
+        description: "Id de un indicador para ejecutar su adaptador y ver qué devuelve"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -26,7 +30,16 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      # Cuando una luz se queda en gris, esto dice por qué sin bucear en el log
+      # del ciclo completo.
+      - name: Diagnosticar un indicador
+        if: inputs.indicador != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/diagnosticar.py "${{ inputs.indicador }}"
+
       - name: Sondear
+        if: inputs.indicador == ''
         run: |
           URLS="${{ inputs.urls }}"
           if [ -z "$URLS" ]; then
