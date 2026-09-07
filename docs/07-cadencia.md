@@ -2,13 +2,18 @@
 
 ## El problema, medido
 
-El workflow pide ejecutarse **cada 10 minutos**. GitHub no lo cumple. Sobre tres días de
-funcionamiento real:
+El workflow pide ejecutarse **cada 10 minutos**. GitHub no lo cumple. Medido sobre las
+últimas 70 horas reales (26 ejecuciones programadas, del 4 al 7 de septiembre):
 
 | | Configurado | Real |
 |---|---|---|
-| Intervalo entre ciclos | 10 min | **mediana 2,1 h**, picos de 5 h |
-| Horas con lectura | 100 % | **39 %** |
+| Ciclos lanzados | 423 | **25** — un 5,9 % |
+| Intervalo entre ciclos | 10 min | **mediana 2,1 h**; el más corto 95 min, el peor 6,4 h |
+| Horas con lectura | 100 % | **39 %** (29 de 75) |
+
+Ni una sola vez se acercó a los 10 minutos pedidos. Tampoco arranca en los minutos que
+pide el cron: los minutos de arranque salen repartidos por todo el reloj (:04, :09, :14,
+:28, :35, :52…), señal de que no se ejecuta cuando toca sino cuando hay hueco.
 
 No es un fallo del código: los `schedule` de GitHub Actions son *best effort*. Se
 descartan bajo carga, y cuanto más a menudo se piden, más se descartan. Pedir cada 10
