@@ -70,6 +70,15 @@ def sondear(url: str) -> None:
                 print(f"   primer elemento: {json.dumps(datos[0], ensure_ascii=False)[:600]}")
         elif isinstance(datos, dict):
             print(f"   JSON: objeto con campos {sorted(datos.keys())[:20]}")
+            # Los títulos revelan qué series trae dentro, que es lo que hay que
+            # filtrar. Sin esto hay que adivinar cómo se llaman.
+            texto = crudo.decode("utf-8", errors="replace")
+            titulos = list(dict.fromkeys(re.findall(r'"title"\s*:\s*"([^"]{0,70})"', texto)))
+            if titulos:
+                print(f"   títulos que contiene: {titulos[:12]}")
+            fechas = re.findall(r'"datetime"\s*:\s*"([^"]{0,40})"', texto)
+            if fechas:
+                print(f"   primera y última fecha: {fechas[0]} … {fechas[-1]} ({len(fechas)} puntos)")
 
     # Si es HTML, casi siempre es una aplicación de una sola página: lo que
     # interesa entonces no es el HTML sino de dónde saca sus datos.
