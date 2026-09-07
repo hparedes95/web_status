@@ -625,6 +625,25 @@ def dias_hasta_caducar_tls(host: str, puerto: int) -> int | None:
         return None
 
 
+def enlace_para_marcar(servicio_id: str) -> str:
+    """Enlace que abre una issue ya etiquetada para encender esa luz.
+
+    Sin esto, marcar una avería es acordarse de abrir una issue, escribir el
+    título y elegir la etiqueta correcta. Con la avería encima nadie lo hace, y
+    la luz se queda en verde mintiendo.
+    """
+    repo = os.environ.get("GITHUB_REPOSITORY", "")
+    if not repo:
+        return ""
+    parametros = urllib.parse.urlencode({
+        "labels": f"caida:{servicio_id}",
+        "title": "Avería en curso",
+        "body": "Describe qué pasa y desde cuándo.\n\n"
+                "**Al cerrar esta issue, la luz del panel vuelve a verde.**",
+    })
+    return f"https://github.com/{repo}/issues/new?{parametros}"
+
+
 def leer_manual(cfg: dict, servicio_id: str) -> Lectura:
     """Estado marcado a mano mediante issues etiquetadas `caida:<id>`.
 
@@ -887,6 +906,7 @@ def main() -> int:
                 "historial": horas[-HORAS_VISIBLES:],
                 "disponibilidad": disponibilidad(horas),
                 "manual": servicio["fuente"].get("tipo") == "manual",
+                "marcar_url": enlace_para_marcar(sid) if servicio["fuente"].get("tipo") == "manual" else "",
                 "alerta": bool(servicio.get("alerta")),
             }
         )

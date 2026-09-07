@@ -109,11 +109,22 @@ que «¿está Endesa activo en Lleida?» no es una pregunta con una sola respues
 
 Se ha buscado, y el resultado es concluyente:
 
-| Probado | Resultado |
-|---|---|
-| `movistar.es` | SPA de Next.js. Sin endpoint de estado |
-| `movistar.es/particulares/atencion-cliente/averias` | 404 |
-| `ayuda.vodafone.es/particulares/averias` | Error TLS: el host rechaza la petición |
+Nueve URLs probadas, en dos tandas, **con y sin cabeceras de navegador**:
+
+| Probado | Sin navegador | Imitando un navegador |
+|---|---|---|
+| `movistar.es` | SPA de Next.js, sin endpoint de estado | — |
+| `movistar.es/particulares/atencion-cliente/averias` | 404 | **404** |
+| `movistar.es/_next/data/<build>/…/averias.json` | — | **404** |
+| `ayuda.vodafone.es/particulares/averias` | Error TLS | — |
+| `ayuda.vodafone.es/` | — | **Mismo error TLS** |
+| `vodafone.es/c/particulares/es/atencion-al-cliente/averias/` | — | **404** |
+| `telefonica.com/es/sala-comunicacion/` | — | 200, pero es la sala de prensa |
+
+La segunda tanda existe porque estas webs suelen bloquear a los clientes que no
+parecen un navegador, y sin comprobarlo el descarte no era concluyente. **Lo es:** el
+comportamiento es idéntico con cabeceras de navegador. No es que nos bloqueen, es que
+esas páginas no existen.
 
 Ni Movistar ni Vodafone publican estado por zona. Sus páginas de averías van tras login y
 atadas a una línea concreta.
@@ -125,6 +136,11 @@ falso. Sería una luz que parece informar y no informa — justo lo que este pan
 
 Por eso esos dos indicadores **se quedan en manual**, y la fila lo dice: «Sin fuente
 pública: se marca a mano».
+
+Para que lo manual no se quede en buena intención, cada fila sin fuente lleva un enlace
+**«marcar avería»** que abre la issue ya etiquetada. Con la avería encima, nadie se acuerda
+de abrir una issue, escribir el título y elegir la etiqueta: si no es un clic, no se hace,
+y la luz se queda en verde mintiendo.
 
 ## Lo que se descartó, y por qué
 

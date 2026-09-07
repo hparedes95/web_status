@@ -311,12 +311,18 @@ function fila(s) {
 
   const mensaje = crear("p", "mensaje");
   const texto = s.mensaje || s.detalle || "";
+  mensaje.append(document.createTextNode(texto));
   if (s.url) {
     const a = crear("a", null, s.manual ? "ver issue" : "página oficial");
     a.href = s.url; a.target = "_blank"; a.rel = "noopener";
-    mensaje.append(document.createTextNode(texto ? texto + " · " : ""), a);
-  } else {
-    mensaje.textContent = texto;
+    mensaje.append(document.createTextNode(texto ? " · " : ""), a);
+  }
+  // En los indicadores sin fuente pública, marcar la avería tiene que ser un
+  // clic: si hay que acordarse de abrir una issue y etiquetarla, no se hace.
+  if (s.manual && s.marcar_url && s.estado !== "caido") {
+    const a = crear("a", null, "marcar avería");
+    a.href = s.marcar_url; a.target = "_blank"; a.rel = "noopener";
+    mensaje.append(document.createTextNode(" · "), a);
   }
 
   const escala = crear("div", "escala");
