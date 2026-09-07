@@ -16,6 +16,11 @@ on:
         description: "Id de un indicador para ejecutar su adaptador y ver qué devuelve"
         required: false
         default: ""
+      navegador:
+        description: "Imitar un navegador (algunas webs bloquean a los clientes que no lo parecen)"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -50,4 +55,4 @@ jobs:
                   https://health.aws.amazon.com/public/currentevents
                   https://status.cloud.microsoft/api/feed"
           fi
-          python scripts/probe.py $URLS
+          python scripts/probe.py $URLS ${{ inputs.navegador && '--navegador' || '' }}

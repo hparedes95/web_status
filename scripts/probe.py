@@ -16,12 +16,24 @@ import urllib.request
 
 UA = "web-status-probe/1.0 (+https://github.com/hparedes95/web_status)"
 
+# Muchas webs comerciales devuelven 404 o cortan el TLS a cualquier cliente que no
+# parezca un navegador. Con --navegador se repite la petición imitando uno, para
+# distinguir «esta URL no existe» de «esta URL me está bloqueando a mí».
+UA_NAVEGADOR = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36")
+CABECERAS_NAVEGADOR = {
+    "User-Agent": UA_NAVEGADOR,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "es-ES,es;q=0.9",
+    "Accept-Encoding": "identity",
+}
+
 
 def sondear(url: str) -> None:
     print(f"\n── {url}")
-    peticion = urllib.request.Request(
-        url, headers={"User-Agent": UA, "Accept": "application/json, application/rss+xml, */*"}
-    )
+    cabeceras = (CABECERAS_NAVEGADOR if "--navegador" in sys.argv else
+                 {"User-Agent": UA, "Accept": "application/json, application/rss+xml, */*"})
+    peticion = urllib.request.Request(url, headers=cabeceras)
     try:
         with urllib.request.urlopen(peticion, timeout=20) as r:
             crudo = r.read()
@@ -95,5 +107,9 @@ def sondear(url: str) -> None:
 
 
 if __name__ == "__main__":
+    if "--navegador" in sys.argv:
+        print("(imitando un navegador)")
     for url in sys.argv[1:]:
+        if url.startswith("--"):
+            continue
         sondear(url)
