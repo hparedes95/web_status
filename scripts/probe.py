@@ -82,6 +82,16 @@ def sondear(url: str) -> None:
                 print(f"   primer elemento: {json.dumps(datos[0], ensure_ascii=False)[:600]}")
         elif isinstance(datos, dict):
             print(f"   JSON: objeto con campos {sorted(datos.keys())[:20]}")
+            # Casi todas las APIs meten lo interesante en "data": sin ver dentro,
+            # saber que el campo existe no sirve de nada.
+            dentro = datos.get("data")
+            if isinstance(dentro, list):
+                print(f"   data: lista de {len(dentro)} elementos")
+                for elemento in dentro[:3]:
+                    print(f"      {json.dumps(elemento, ensure_ascii=False)[:300]}")
+            elif isinstance(dentro, dict):
+                print(f"   data: objeto con campos {sorted(dentro.keys())[:15]}")
+                print(f"      {json.dumps(dentro, ensure_ascii=False)[:300]}")
             # Los títulos revelan qué series trae dentro, que es lo que hay que
             # filtrar. Sin esto hay que adivinar cómo se llaman.
             texto = crudo.decode("utf-8", errors="replace")
