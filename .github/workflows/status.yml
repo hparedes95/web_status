@@ -2,12 +2,19 @@ name: Estado de servicios
 
 on:
   schedule:
-    # Cada 10 minutos. Actions no es puntual: con carga puede retrasarse bastante,
-    # así que la cadencia real es de 10-20 min. Los minutos son gratis porque el
-    # repositorio es público. Si algún día pasa a privado, dejan de serlo: cada
-    # ejecución ronda los 2 min facturados, así que habría que subir el intervalo
-    # a 30 min o a 1 hora (ver docs/04-arranque.md).
+    # OJO: esto pide cada 10 minutos, pero GitHub NO lo cumple. Medido sobre tres
+    # días reales: mediana de 2,1 h entre ciclos y picos de 5 h, con solo un 39 %
+    # de las horas cubiertas. Los `schedule` de Actions son "cuando se pueda", y
+    # cuanto más a menudo se piden, más se descartan.
+    #
+    # Se deja como red de seguridad. Para una cadencia de verdad hay que empujar
+    # desde fuera con repository_dispatch: ver docs/07-cadencia.md.
     - cron: "*/10 * * * *"
+
+  # Disparo externo: un `curl` desde cualquier máquina vuestra da la cadencia que
+  # el cron de GitHub no garantiza. Es la vía fiable.
+  repository_dispatch:
+    types: [comprobar]
   # Al abrir, cerrar o etiquetar una issue `caida:*` el panel se actualiza al momento
   # en vez de esperar al siguiente ciclo.
   issues:

@@ -31,13 +31,15 @@ avería con el operador y la marca, el resto deja de llamar al mismo soporte.
 | [03 — Implementación](docs/03-implementacion.md) | Cómo funciona por dentro: adaptadores, estados y la regla de la alerta |
 | [05 — Qué añadir a continuación](docs/05-mejoras.md) | Propuesta priorizada de mejoras |
 | [06 — Agente de latido](docs/06-agente.md) | Energía, línea y telefonía medidas desde dentro |
+| [07 — Cadencia](docs/07-cadencia.md) | Por qué el cron de GitHub no cumple los 10 min y cómo arreglarlo |
 | [04 — Puesta en marcha](docs/04-arranque.md) | Los cinco pasos que faltan: bot de Telegram, secretos, Pages, etiquetas y primer ciclo |
 | [referencia/](docs/referencia/) | Análisis previo, con un alcance más amplio que se descartó |
 
 ## Cómo funciona
 
 Sin servidor: un workflow de GitHub Actions lee las fuentes cada 10 minutos, publica el
-panel en GitHub Pages y avisa por Telegram cuando algo se cae. Las tres luces sin API
+panel en GitHub Pages y avisa por Telegram cuando algo se cae. **Ojo con la cadencia real:**
+GitHub no cumple los 10 minutos ([07 — Cadencia](docs/07-cadencia.md)). Las tres luces sin API
 (telefonía y energía) se encienden abriendo una issue con la etiqueta `caida:<id>`.
 
 Detalle en [03 — Implementación](docs/03-implementacion.md).
