@@ -159,6 +159,41 @@ fingir_json({"data": {}})
 comprobar(poller.leer_ree(CFG_REE).estado == "desconocido",
           "formato inesperado -> desconocido")
 
+# ── IODA: caídas de red por sistema autónomo ─────────────────────────────
+print("\nIODA (operadores sin página de estado)")
+
+CFG_IODA = {"asn": 12430, "ventana_horas": 6}
+
+fingir_json({"type": "outages.alerts", "error": None, "data": []})
+r = poller.leer_ioda(CFG_IODA)
+comprobar(r.estado == "operativo", "sin avisos -> operativo")
+comprobar(r.limitado, "la lectura va marcada como indirecta")
+comprobar("12430" in r.mensaje, "el mensaje dice de qué red habla")
+
+# IODA emite también avisos de recuperación: no pueden pintar la luz de rojo.
+fingir_json({"error": None, "data": [{"level": "normal", "datasource": "bgp"}]})
+comprobar(poller.leer_ioda(CFG_IODA).estado == "operativo",
+          "un aviso de recuperación no cuenta como caída")
+
+fingir_json({"error": None, "data": [{"level": "warning", "datasource": "ping-slash24"}]})
+comprobar(poller.leer_ioda(CFG_IODA).estado == "degradado", "un aviso de nivel warning -> ámbar")
+
+fingir_json({"error": None, "data": [
+    {"level": "critical", "datasource": "bgp"},
+    {"level": "warning", "datasource": "ping-slash24"},
+]})
+r = poller.leer_ioda(CFG_IODA)
+comprobar(r.estado == "caido", "un aviso crítico -> caída")
+comprobar("bgp" in r.mensaje and "ping-slash24" in r.mensaje,
+          "y nombra las señales que lo detectaron")
+
+fingir_json({"error": "algo falló", "data": None})
+comprobar(poller.leer_ioda(CFG_IODA).estado == "desconocido",
+          "si IODA devuelve error -> desconocido, no caído")
+
+fingir_json({"data": "esto no es una lista"})
+comprobar(poller.leer_ioda(CFG_IODA).estado == "desconocido", "formato raro -> desconocido")
+
 # ── Latido del agente que corre dentro de la red ─────────────────────────
 print("\nLatido")
 

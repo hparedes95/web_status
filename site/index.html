@@ -286,9 +286,9 @@ function fila(s) {
   if (s.limitado) {
     // La lectura no viene del proveedor sino de una comprobación nuestra:
     // hay que verlo, para no confundirla con un estado oficial.
-    const et = crear("span", "marca-manual", "sonda");
-    et.title = "Comprobación propia de que el servicio responde. "
-             + "Detecta caídas totales, no degradaciones parciales.";
+    const et = crear("span", "marca-manual", "indirecto");
+    et.title = "Señal indirecta, no el estado oficial del proveedor. "
+             + "Detecta caídas grandes, no problemas locales ni degradaciones parciales.";
     cabeza.append(et);
   }
 

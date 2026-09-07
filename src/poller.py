@@ -482,6 +482,67 @@ def leer_ree(cfg: dict) -> Lectura:
     return Lectura("operativo", f"Demanda nacional {mw:,} MW".replace(",", "."), panel)
 
 
+def leer_ioda(cfg: dict) -> Lectura:
+    """Caídas de red detectadas por IODA, para operadores sin página de estado.
+
+    IODA (Georgia Tech) detecta interrupciones de conectividad por sistema
+    autónomo cruzando tres señales independientes: anuncios BGP, sondeo activo y
+    tráfico de fondo. Es pública, gratuita y está hecha justo para esto — que es
+    más de lo que se puede decir de ninguna fuente de los propios operadores,
+    que no publican nada.
+
+    **Qué ve y qué no.** Ve que la red del operador deja de estar accesible a lo
+    grande: una caída nacional o regional seria. **No ve** que no haya cobertura
+    en una calle, ni que vuestra línea concreta esté cortada. Por eso la lectura
+    va marcada como indirecta: es una medición de un tercero, no el estado
+    oficial del operador.
+    """
+    asn = cfg["asn"]
+    ventana = timedelta(hours=cfg.get("ventana_horas", 6))
+    hasta = ahora()
+    consulta = urllib.parse.urlencode({
+        "from": int((hasta - ventana).timestamp()),
+        "until": int(hasta.timestamp()),
+        "entityType": "asn",
+        "entityCode": str(asn),
+    })
+    panel = f"https://ioda.inetintel.cc.gatech.edu/asn/{asn}"
+
+    datos = pedir_json(f"{cfg.get('url', 'https://api.ioda.inetintel.cc.gatech.edu/v2/outages/alerts')}?{consulta}")
+    if not isinstance(datos, dict) or datos.get("error"):
+        return Lectura("desconocido", f"IODA devolvió un error para AS{asn}", panel, limitado=True)
+
+    avisos = datos.get("data")
+    if not isinstance(avisos, list):
+        return Lectura("desconocido", "Formato inesperado en la respuesta de IODA", panel,
+                       limitado=True)
+
+    # IODA emite tanto avisos de caída como de recuperación. Solo cuentan los que
+    # marcan un problema: sin filtrar, una recuperación pintaría la luz de rojo.
+    problemas = [a for a in avisos if isinstance(a, dict)
+                 and str(a.get("level", "")).lower() in ("warning", "critical")]
+
+    if not problemas:
+        return Lectura(
+            "operativo",
+            f"AS{asn}: IODA no detecta ninguna caída de red en las últimas "
+            f"{int(ventana.total_seconds() // 3600)} h",
+            panel,
+            limitado=True,
+        )
+
+    graves = [a for a in problemas if str(a.get("level", "")).lower() == "critical"]
+    fuentes = sorted({str(a.get("datasource", "?")) for a in problemas})
+    return Lectura(
+        "caido" if graves else "degradado",
+        f"AS{asn}: IODA detecta una caída de red ({len(problemas)} avisos, "
+        f"señales: {', '.join(fuentes)})",
+        panel,
+        [str(a.get("datasource", "?")) for a in problemas],
+        limitado=True,
+    )
+
+
 def _issue_con_etiqueta(etiqueta: str) -> dict | None:
     """Primera issue abierta con esa etiqueta, o None."""
     repo = os.environ.get("GITHUB_REPOSITORY", "")
@@ -725,6 +786,7 @@ ADAPTADORES = {
     "latido": lambda cfg, _id: leer_latido(cfg),
     "http": lambda cfg, _id: leer_http(cfg),
     "ree": lambda cfg, _id: leer_ree(cfg),
+    "ioda": lambda cfg, _id: leer_ioda(cfg),
     "manual": lambda cfg, sid: leer_manual(cfg, sid),
 }
 

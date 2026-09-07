@@ -9,6 +9,7 @@
 #   m365        Graph si hay credenciales; si no, sonda propia
 #   google      paneles de estado de Google Cloud y Workspace
 #   ree         demanda nacional en tiempo real (API pública de Red Eléctrica)
+#   ioda        caídas de red por sistema autónomo, detectadas por IODA
 #   manual      alguien lo marca a mano; se guarda quién y cuándo
 #
 # categoria: agrupa las tarjetas del panel
@@ -211,17 +212,22 @@ servicios:
   - id: telefonica
     nombre: "Telefónica / Movistar"
     categoria: infra
-    detalle: "Movistar es la marca comercial de Telefónica: un indicador, no dos"
-    alerta: false
+    detalle: "Caídas de red detectadas por IODA. Movistar es la marca de Telefónica: un indicador, no dos"
+    alerta: false          # dejar en false hasta ver cómo se comporta unos días
     fuente:
-      tipo: manual
+      tipo: ioda
+      asn: 3352            # TELEFONICA DE ESPANA
+      ventana_horas: 6
 
   - id: vodafone
     nombre: "Vodafone"
     categoria: infra
-    alerta: false
+    detalle: "Caídas de red detectadas por IODA"
+    alerta: false          # dejar en false hasta ver cómo se comporta unos días
     fuente:
-      tipo: manual
+      tipo: ioda
+      asn: 12430           # VODAFONE ESPANA S.A.U., confirmado con la sonda
+      ventana_horas: 6
 
   - id: red-electrica
     nombre: "Red eléctrica española"
