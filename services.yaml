@@ -64,7 +64,7 @@ servicios:
       tipo: json
       url: "https://health.aws.amazon.com/public/currentevents"
       regiones: ["eu-west-1", "eu-south-2", "ireland", "spain"]
-      ventana_horas: 6      # el feed trae el histórico completo: sin esto, siempre en rojo
+      ventana_horas: 8        # margen a ambos lados: REE lee las fechas en hora local      # el feed trae el histórico completo: sin esto, siempre en rojo
 
   # ───────── IA ─────────
 
@@ -233,7 +233,7 @@ servicios:
       # API pública y documentada de REE. No es scraping.
       # Sin fechas: el adaptador calcula la ventana en cada ciclo.
       url: "https://apidatos.ree.es/es/datos/demanda/demanda-tiempo-real"
-      ventana_horas: 6
+      ventana_horas: 8        # margen a ambos lados: REE lee las fechas en hora local
       panel: "https://demanda.ree.es/visiona/peninsula/demandaqh/total"
       serie: "real"          # de las series que da REE (real, prevista, programada)
       max_minutos: 60        # sin dato nuevo en más de una hora -> desconocido

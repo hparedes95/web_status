@@ -396,11 +396,16 @@ def leer_ree(cfg: dict) -> Lectura:
     """
     # La ventana se calcula aquí y no se fija en la URL: una URL con fechas
     # escritas a mano deja de devolver datos al día siguiente.
-    fin = ahora() + timedelta(hours=1)
-    inicio = fin - timedelta(hours=cfg.get("ventana_horas", 6))
+    #
+    # REE interpreta estas fechas en hora local española, no en UTC. En vez de
+    # depender de la base de datos de zonas horarias, se pide una ventana amplia
+    # a ambos lados: así cubre el momento actual se interprete como se interprete.
+    # Lo que manda para saber si el dato es fresco es la fecha que devuelve cada
+    # punto, que sí trae su propio desfase horario.
+    margen = timedelta(hours=cfg.get("ventana_horas", 8))
     consulta = urllib.parse.urlencode({
-        "start_date": inicio.strftime("%Y-%m-%dT%H:%M"),
-        "end_date": fin.strftime("%Y-%m-%dT%H:%M"),
+        "start_date": (ahora() - margen).strftime("%Y-%m-%dT%H:%M"),
+        "end_date": (ahora() + margen).strftime("%Y-%m-%dT%H:%M"),
         "time_trunc": cfg.get("time_trunc", "hour"),
     })
     separador = "&" if "?" in cfg["url"] else "?"
@@ -446,8 +451,21 @@ def leer_ree(cfg: dict) -> Lectura:
     # Una caída brusca en una hora es la firma de un apagón: la demanda nacional
     # no se mueve así ni de día ni de noche. Un umbral generoso evita falsos
     # positivos por la curva normal de consumo.
+    #
+    # El punto de comparación se busca por fecha, no por posición: REE ha servido
+    # datos cada 5 y cada 10 minutos según el momento, y contar posiciones daría
+    # una ventana distinta cada vez.
     caida_max = cfg.get("caida_pct_1h", 30)
-    hace_una_hora = valores[-7] if len(valores) >= 7 else valores[0]
+    objetivo = medido - timedelta(hours=1)
+    hace_una_hora, mejor = valores[0], None
+    for v in valores:
+        try:
+            distancia = abs((datetime.fromisoformat(str(v["datetime"])) - objetivo).total_seconds())
+        except (KeyError, ValueError):
+            continue
+        if mejor is None or distancia < mejor:
+            mejor, hace_una_hora = distancia, v
+
     try:
         antes = float(hace_una_hora["value"])
         caida = 100 * (antes - float(ultimo["value"])) / antes if antes else 0
