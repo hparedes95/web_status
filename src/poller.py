@@ -394,7 +394,18 @@ def leer_ree(cfg: dict) -> Lectura:
     **No ve** un corte en vuestra calle ni en vuestro edificio — para eso no hay
     fuente pública, hay que medirlo desde dentro.
     """
-    datos = pedir_json(cfg["url"])
+    # La ventana se calcula aquí y no se fija en la URL: una URL con fechas
+    # escritas a mano deja de devolver datos al día siguiente.
+    fin = ahora() + timedelta(hours=1)
+    inicio = fin - timedelta(hours=cfg.get("ventana_horas", 6))
+    consulta = urllib.parse.urlencode({
+        "start_date": inicio.strftime("%Y-%m-%dT%H:%M"),
+        "end_date": fin.strftime("%Y-%m-%dT%H:%M"),
+        "time_trunc": cfg.get("time_trunc", "hour"),
+    })
+    separador = "&" if "?" in cfg["url"] else "?"
+
+    datos = pedir_json(f"{cfg['url']}{separador}{consulta}")
     series = datos.get("included") if isinstance(datos, dict) else None
     if not isinstance(series, list) or not series:
         return Lectura("desconocido", "Formato inesperado en la API de REE", cfg.get("panel", ""))

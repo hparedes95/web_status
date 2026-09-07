@@ -231,7 +231,9 @@ servicios:
     fuente:
       tipo: ree
       # API pública y documentada de REE. No es scraping.
-      url: "https://apidatos.ree.es/es/datos/demanda/demanda-tiempo-real?time_trunc=hour"
+      # Sin fechas: el adaptador calcula la ventana en cada ciclo.
+      url: "https://apidatos.ree.es/es/datos/demanda/demanda-tiempo-real"
+      ventana_horas: 6
       panel: "https://demanda.ree.es/visiona/peninsula/demandaqh/total"
       serie: "real"          # de las series que da REE (real, prevista, programada)
       max_minutos: 60        # sin dato nuevo en más de una hora -> desconocido
