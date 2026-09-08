@@ -16,6 +16,10 @@ on:
         description: "Id de un indicador para ejecutar su adaptador y ver qué devuelve"
         required: false
         default: ""
+      grupo:
+        description: "Statuspage: listar entero el grupo de componentes que contenga este texto"
+        required: false
+        default: ""
       navegador:
         description: "Imitar un navegador (algunas webs bloquean a los clientes que no lo parecen)"
         type: boolean
@@ -55,4 +59,6 @@ jobs:
                   https://health.aws.amazon.com/public/currentevents
                   https://status.cloud.microsoft/api/feed"
           fi
-          python scripts/probe.py $URLS ${{ inputs.navegador && '--navegador' || '' }}
+          ARGS=""
+          if [ -n "${{ inputs.grupo }}" ]; then ARGS="--grupo"; fi
+          python scripts/probe.py $URLS $ARGS "${{ inputs.grupo }}" ${{ inputs.navegador && '--navegador' || '' }}

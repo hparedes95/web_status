@@ -16,6 +16,10 @@ import urllib.request
 
 UA = "web-status-probe/1.0 (+https://github.com/hparedes95/web_status)"
 
+# --grupo TEXTO: listar entero el grupo de componentes cuyo nombre contenga TEXTO.
+FILTRO_GRUPO = ""
+
+
 # Muchas webs comerciales devuelven 404 o cortan el TLS a cualquier cliente que no
 # parezca un navegador. Con --navegador se repite la petición imitando uno, para
 # distinguir «esta URL no existe» de «esta URL me está bloqueando a mí».
@@ -102,8 +106,15 @@ def sondear(url: str) -> None:
                 grupos = {c["id"]: c.get("name", "?") for c in componentes if c.get("group")}
                 for gid, nombre in grupos.items():
                     hijos = [c for c in componentes if c.get("group_id") == gid]
+                    # Sin filtro se recorta cada grupo: con cientos de componentes el
+                    # registro es ilegible. Con `--grupo TEXTO` se ve entero el que
+                    # interesa, que es de donde salen los nombres para `componentes:`.
+                    entero = FILTRO_GRUPO and FILTRO_GRUPO.lower() in nombre.lower()
+                    if FILTRO_GRUPO and not entero:
+                        print(f"      ── {nombre} ({len(hijos)}) — omitido")
+                        continue
                     print(f"      ── {nombre} ({len(hijos)})")
-                    for c in hijos[:25]:
+                    for c in (hijos if entero else hijos[:25]):
                         print(f"         · {c.get('name','?')}  [{c.get('status','?')}]")
                 sueltos = [c for c in componentes
                            if not c.get("group") and not c.get("group_id")]
@@ -139,7 +150,14 @@ def sondear(url: str) -> None:
 if __name__ == "__main__":
     if "--navegador" in sys.argv:
         print("(imitando un navegador)")
-    for url in sys.argv[1:]:
-        if url.startswith("--"):
+    if "--grupo" in sys.argv:
+        FILTRO_GRUPO = sys.argv[sys.argv.index("--grupo") + 1]
+        print(f"(listando entero el grupo que contenga «{FILTRO_GRUPO}»)")
+    saltar = set()
+    for i, arg in enumerate(sys.argv):
+        if arg == "--grupo":
+            saltar.add(i + 1)
+    for i, url in enumerate(sys.argv):
+        if i == 0 or i in saltar or url.startswith("--"):
             continue
         sondear(url)
