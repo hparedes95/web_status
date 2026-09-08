@@ -92,6 +92,26 @@ def sondear(url: str) -> None:
             elif isinstance(dentro, dict):
                 print(f"   data: objeto con campos {sorted(dentro.keys())[:15]}")
                 print(f"      {json.dumps(dentro, ensure_ascii=False)[:300]}")
+            # Statuspage: lo que hace falta para configurar `componentes:` son los
+            # nombres exactos, y hay proveedores con cientos (Cloudflare publica un
+            # componente por centro de datos). Se listan agrupados, que es como se
+            # ven en su web, para poder elegir sin descargarse el JSON entero.
+            componentes = datos.get("components")
+            if isinstance(componentes, list) and componentes:
+                print(f"   Statuspage: {len(componentes)} componentes")
+                grupos = {c["id"]: c.get("name", "?") for c in componentes if c.get("group")}
+                for gid, nombre in grupos.items():
+                    hijos = [c for c in componentes if c.get("group_id") == gid]
+                    print(f"      ── {nombre} ({len(hijos)})")
+                    for c in hijos[:25]:
+                        print(f"         · {c.get('name','?')}  [{c.get('status','?')}]")
+                sueltos = [c for c in componentes
+                           if not c.get("group") and not c.get("group_id")]
+                if sueltos:
+                    print(f"      ── sin grupo ({len(sueltos)})")
+                    for c in sueltos[:15]:
+                        print(f"         · {c.get('name','?')}  [{c.get('status','?')}]")
+
             # Los títulos revelan qué series trae dentro, que es lo que hay que
             # filtrar. Sin esto hay que adivinar cómo se llaman.
             texto = crudo.decode("utf-8", errors="replace")
