@@ -14,7 +14,42 @@
 | Azure | RSS de estado de Azure | ✅ Feed válido, sin avisos |
 | AWS | Health Dashboard público | ✅ Operativo, **tras dos correcciones** |
 | Google Gemini | Paneles de Google Cloud y Workspace | ✅ Lista de incidencias en JSON |
+| Cloudflare España | `www.cloudflarestatus.com`, componentes MAD y BCN | ✅ Ambos operativos |
 | Microsoft 365 | — | ❌ **No existe feed público** |
+
+## Cloudflare: el indicador global no vale
+
+Cloudflare publica **479 componentes** en formato Statuspage, y **343 son centros de
+datos**. Eso rompe el uso normal de la fuente: el indicador global de la página está casi
+siempre en ámbar porque siempre hay algún centro en obras en algún sitio. En la
+comprobación del 8-9-2026, con todo dentro de lo normal, había a la vez quince en avería
+parcial o mantenimiento — Izmir, Basra, Nayaf, Jacksonville, Guam, Arica…
+
+Tomar esa señal como propia sería tener una luz permanentemente encendida que no significa
+nada. Y filtrar por el grupo entero de productos (128 componentes) tampoco sirve: en esa
+misma comprobación había cuatro degradados (Browser Isolation, Dashboard, Gateway, WARP).
+
+Así que la luz mira **solo los emplazamientos españoles**, que son los que sirven el
+tráfico de aquí:
+
+| Componente | Verificado |
+|---|---|
+| `Madrid, Spain - (MAD)` | ✅ |
+| `Barcelona, Spain - (BCN)` | ✅ |
+
+No hay más. Se revisaron uno a uno los 58 componentes del grupo *Europe* y los 34 de
+*Africa* — donde estarían las Canarias si existieran — y no aparece ningún otro
+emplazamiento español.
+
+**Las incidencias también se filtran**, no solo los componentes. Cloudflare casi siempre
+tiene alguna abierta en alguna parte del mundo; listarlas bajo una luz que solo mira España
+sería dar por nuestro un problema ajeno. El adaptador se quedó solo con las que tocan un
+componente de los elegidos, y eso beneficia igualmente a GitHub y Copilot.
+
+**Sin alerta de Telegram, a propósito.** Cuando cae un centro, Cloudflare desvía el tráfico
+a los vecinos (Lisboa, Marsella, París): se nota en latencia más que en caída. Es
+información útil para entender una lentitud, no un motivo para sonar de madrugada. Cambiar
+`alerta` a `true` en `services.yaml` si preferís enteraros igualmente.
 
 ## Google: dos paneles para un mismo producto
 

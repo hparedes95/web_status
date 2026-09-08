@@ -117,6 +117,29 @@ servicios:
         - "https://www.google.com/appsstatus/dashboard/incidents.json"
       productos: ["gemini", "vertex ai"]
 
+  # Cloudflare publica 479 componentes y 343 son centros de datos. El indicador
+  # global de su página no sirve: comprobado el 8-9-2026, con todo «normal» había
+  # a la vez 15 centros en avería parcial o mantenimiento por el mundo, así que
+  # esa luz estaría permanentemente en ámbar y no diría nada.
+  #
+  # Se miran solo los dos únicos emplazamientos españoles que publica. Verificado
+  # componente a componente con la sonda: no hay ninguno más, tampoco en Canarias
+  # (el grupo de África está completo y no aparece).
+  - id: cloudflare
+    nombre: "Cloudflare España"
+    detalle: "Los dos centros de datos que sirven a España"
+    categoria: nube
+    # En false a propósito: cuando cae un centro, Cloudflare desvía el tráfico a
+    # los vecinos (Lisboa, Marsella, París). Se nota en latencia, no siempre en
+    # caída. Ponerlo en true si preferís enteraros igualmente.
+    alerta: false
+    fuente:
+      tipo: statuspage
+      url: "https://www.cloudflarestatus.com"
+      componentes:
+        - "Madrid, Spain - (MAD)"
+        - "Barcelona, Spain - (BCN)"
+
   # ───────── Nuestros propios servicios ─────────
   # Para una empresa de software, esto es lo que ve el cliente. Vigila también
   # la caducidad del certificado TLS, la caída autoinfligida más común.

@@ -65,6 +65,39 @@ r = poller.leer_statuspage({"url": "https://www.githubstatus.com", "componentes"
 comprobar(r.estado == "caido", "la luz de Copilot sí refleja su propia caída")
 comprobar("Copilot" in r.mensaje, "el mensaje nombra el componente roto")
 
+# ── Statuspage: las incidencias también se filtran ───────────────────────
+# Cloudflare publica 479 componentes y casi siempre tiene alguna incidencia
+# abierta en algún sitio del mundo. Bajo una luz que solo mira España, listarlas
+# todas sería dar por nuestro un problema ajeno.
+CLOUDFLARE = {
+    "status": {"indicator": "minor", "description": "Partially Degraded Service"},
+    "components": [
+        {"name": "Madrid, Spain - (MAD)", "status": "operational"},
+        {"name": "Barcelona, Spain - (BCN)", "status": "operational"},
+        {"name": "Izmir, Turkey - (ADB)", "status": "partial_outage"},
+    ],
+    "incidents": [
+        {"name": "Problemas en Izmir", "components": [{"name": "Izmir, Turkey - (ADB)"}]},
+    ],
+}
+ESPANA = ["Madrid, Spain - (MAD)", "Barcelona, Spain - (BCN)"]
+
+fingir_json(CLOUDFLARE)
+r = poller.leer_statuspage({"url": "https://www.cloudflarestatus.com", "componentes": ESPANA})
+comprobar(r.estado == "operativo", "una avería en Turquía no apaga la luz de España")
+comprobar(r.incidencias == [], "ni se cuela en la lista de incidencias")
+comprobar("Izmir" not in r.mensaje, "ni se menciona en el mensaje")
+
+CLOUDFLARE_AQUI = dict(CLOUDFLARE)
+CLOUDFLARE_AQUI["incidents"] = [
+    {"name": "Reencaminamiento en Madrid", "components": [{"name": "Madrid, Spain - (MAD)"}]},
+]
+fingir_json(CLOUDFLARE_AQUI)
+r = poller.leer_statuspage({"url": "https://www.cloudflarestatus.com", "componentes": ESPANA})
+comprobar(r.incidencias == ["Reencaminamiento en Madrid"],
+          "una incidencia que sí toca España sí se recoge")
+comprobar("Madrid" in r.mensaje, "y se ve en el mensaje aunque el estado sea verde")
+
 # ── Statuspage: componente que ya no existe ──────────────────────────────
 fingir_json(GITHUB)
 r = poller.leer_statuspage({"url": "https://www.githubstatus.com", "componentes": ["Inventado"]})

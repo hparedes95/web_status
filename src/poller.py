@@ -151,7 +151,7 @@ def leer_statuspage(cfg: dict) -> Lectura:
     """
     base = cfg["url"].rstrip("/")
     datos = pedir_json(f"{base}/api/v2/summary.json")
-    incidencias = [i.get("name", "") for i in datos.get("incidents", []) if i.get("name")]
+    abiertas = datos.get("incidents", [])
     filtro = cfg.get("componentes")
 
     if filtro:
@@ -161,8 +161,14 @@ def leer_statuspage(cfg: dict) -> Lectura:
                 "desconocido",
                 f"No se encontraron los componentes {filtro} en la página de estado",
                 base,
-                incidencias,
+                [i.get("name", "") for i in abiertas if i.get("name")],
             )
+        # Filtrar también las incidencias, no solo los componentes. Cloudflare
+        # publica 479 componentes y casi siempre tiene alguna incidencia abierta
+        # en algún sitio del mundo; listarlas todas bajo una luz que solo mira
+        # Madrid y Barcelona sería dar por nuestro un problema ajeno.
+        abiertas = [i for i in abiertas
+                    if any(c.get("name") in filtro for c in i.get("components", []))]
         estado = peor([COMPONENTE.get(c.get("status", ""), "desconocido") for c in elegidos])
         rotos = [c["name"] for c in elegidos if c.get("status") != "operational"]
         mensaje = ", ".join(rotos) if rotos else "Todos los componentes operativos"
@@ -171,6 +177,7 @@ def leer_statuspage(cfg: dict) -> Lectura:
         estado = INDICADOR.get(indicador, "desconocido")
         mensaje = (datos.get("status") or {}).get("description", "")
 
+    incidencias = [i.get("name", "") for i in abiertas if i.get("name")]
     if incidencias and estado == "operativo":
         # La página se declara operativa pero hay incidencias abiertas: se muestran,
         # sin cambiar el estado. Manda lo que diga el proveedor.
