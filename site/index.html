@@ -97,6 +97,12 @@
     color:var(--apagado)}
   .latido{width:7px;height:7px;border-radius:50%;background:var(--apagado);flex:none;
     animation:latir 3.4s ease-in-out infinite}
+  .cobertura{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--apagado);border-left:1px solid var(--filete);
+    padding-left:14px;margin-left:2px}
+  .cobertura b{font-weight:700;font-variant-numeric:tabular-nums}
+  .cobertura.floja b{color:var(--warn)}
+  .cobertura.rota b{color:var(--crit)}
   @keyframes latir{0%,100%{opacity:.35}50%{opacity:1}}
 
   /* ── veredicto ────────────────────────────────────────────────────── */
@@ -269,7 +275,8 @@
 
   <header class="cabecera">
     <span class="marca"><b>Estado de servicios</b><span>de los que dependemos</span></span>
-    <span class="sello"><i class="latido" aria-hidden="true"></i><span id="sello">Cargando…</span></span>
+    <span class="sello"><i class="latido" aria-hidden="true"></i><span id="sello">Cargando…</span>
+      <span class="cobertura" id="cobertura" hidden></span></span>
   </header>
 
   <section class="veredicto v-unk" id="veredicto" aria-live="polite">
@@ -574,6 +581,29 @@ function pintar(datos) {
     c.append(crear("b", null, String(n)), crear("span", null, ETIQUETA[estado]));
     recuento.append(c);
   }
+
+  // Cobertura: de las últimas 24 horas, en cuántas llegó a haber alguna lectura.
+  // Es la forma de ver si la cadencia está funcionando sin tener que mirar los
+  // registros de Actions: 100 % es lo que tiene que salir; menos son huecos.
+  const ventana = 24;
+  let cubiertas = 0;
+  for (let i = 1; i <= ventana; i++) {
+    const hay = datos.servicios.some(s => {
+      const h = (s.historial || "").slice(-ventana);
+      const letra = h[h.length - i];
+      return letra && letra !== "-";
+    });
+    if (hay) cubiertas++;
+  }
+  const pct = Math.round(100 * cubiertas / ventana);
+  const cob = document.getElementById("cobertura");
+  cob.hidden = false;
+  cob.className = "cobertura" + (pct === 100 ? "" : pct >= 80 ? " floja" : " rota");
+  cob.replaceChildren(document.createTextNode("Cobertura 24 h "), crear("b", null, pct + " %"));
+  cob.title = pct === 100
+    ? "Las 24 últimas horas tienen lectura: la cadencia está funcionando."
+    : `${ventana - cubiertas} de las últimas 24 horas se quedaron sin ninguna lectura. `
+      + "Son los huecos de la barra: no es que los proveedores fallaran, es que no se miró.";
 
   document.getElementById("sello").textContent = "Comprobado " + hace(datos.generado_en);
   document.getElementById("generado").textContent =

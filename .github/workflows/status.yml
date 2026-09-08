@@ -1,20 +1,20 @@
 name: Estado de servicios
 
 on:
+  # Red de seguridad, no el motor. GitHub descarta los `schedule` bajo carga:
+  # medido sobre 70 h reales, de 423 ciclos pedidos cada 10 min ejecutó 25 (5,9 %),
+  # con una mediana de 2,1 h entre ellos y un pico de 6,4 h. Pedirlos más a menudo
+  # no ayuda: cuanto más se piden, más se descartan.
+  #
+  # El motor es la cadena: cada ciclo encadena el siguiente (paso «Encadenar»).
+  # Esto de aquí solo existe para reanudarla si se rompe.
   schedule:
-    # OJO: esto pide cada 10 minutos, pero GitHub NO lo cumple. Medido sobre tres
-    # días reales: mediana de 2,1 h entre ciclos y picos de 5 h, con solo un 39 %
-    # de las horas cubiertas. Los `schedule` de Actions son "cuando se pueda", y
-    # cuanto más a menudo se piden, más se descartan.
-    #
-    # Se deja como red de seguridad. Para una cadencia de verdad hay que empujar
-    # desde fuera con repository_dispatch: ver docs/07-cadencia.md.
-    - cron: "*/10 * * * *"
+    - cron: "17 * * * *"
 
-  # Disparo externo: un `curl` desde cualquier máquina vuestra da la cadencia que
-  # el cron de GitHub no garantiza. Es la vía fiable.
   repository_dispatch:
-    types: [comprobar]
+    # `relanzar` lo manda el propio ciclo anterior: es el eslabón de la cadena.
+    # `comprobar` es para empujar desde fuera (una máquina vuestra, ver docs/07).
+    types: [relanzar, comprobar]
   # Al abrir, cerrar o etiquetar una issue `caida:*` el panel se actualiza al momento
   # en vez de esperar al siguiente ciclo.
   issues:
@@ -27,14 +27,26 @@ permissions:
   pages: write      # publicar el panel
   id-token: write   # requerido por deploy-pages
 
-# Que dos ciclos no se pisen al escribir estado.json ni al desplegar.
+# `cancel-in-progress: true` es lo que impide que la cadena se duplique. Si mientras
+# un ciclo está en marcha llega el cron, una issue o un disparo externo, ese ciclo se
+# cancela y el nuevo toma el relevo: siempre hay exactamente uno vivo. Con `false`
+# se encolarían y cada disparo doblaría el número de cadenas.
 concurrency:
   group: estado-servicios
-  cancel-in-progress: false
+  cancel-in-progress: true
+
+env:
+  # Sondeos dentro de un mismo ciclo y pausa entre ellos. 5 × 120 s ≈ 10 min de
+  # ciclo: seis vueltas por hora, que es lo que garantiza que ninguna hora se
+  # quede sin lectura. La página se publica una vez por ciclo; el sondeo va más
+  # rápido que la publicación porque las alertas no esperan a la página.
+  SONDEOS: "5"
+  PAUSA: "120"
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     environment:
       name: github-pages
       url: ${{ steps.desplegar.outputs.page_url }}
@@ -54,6 +66,10 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
+      # Varias lecturas por ciclo, no una. Además de no dejar ninguna hora sin
+      # cubrir, esto es lo que hace útiles las alertas: la regla pide dos lecturas
+      # seguidas en rojo, y aquí son dos minutos en vez de las cuatro a diez horas
+      # que costaban cuando cada lectura dependía del cron de GitHub.
       - name: Leer el estado de los proveedores
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -62,12 +78,19 @@ jobs:
           M365_TENANT_ID: ${{ secrets.M365_TENANT_ID }}
           M365_CLIENT_ID: ${{ secrets.M365_CLIENT_ID }}
           M365_CLIENT_SECRET: ${{ secrets.M365_CLIENT_SECRET }}
-        run: python src/poller.py
+        run: |
+          for vuelta in $(seq 1 "$SONDEOS"); do
+            echo "::group::Sondeo $vuelta de $SONDEOS"
+            # Un sondeo que falle no puede llevarse por delante el resto del ciclo
+            # ni, sobre todo, el eslabón que encadena el siguiente.
+            python src/poller.py || echo "::warning::El sondeo $vuelta falló"
+            echo "::endgroup::"
+            if [ "$vuelta" -lt "$SONDEOS" ]; then sleep "$PAUSA"; fi
+          done
 
       # estado.json guarda también el historial por horas que dibuja la barra del
-      # panel, así que cambia al menos una vez por hora: ~24 commits al día. Eso
-      # mantiene vivo el repositorio, que es lo que evita que GitHub desactive el
-      # workflow programado por inactividad.
+      # panel, así que cambia al menos una vez por hora. Eso mantiene vivo el
+      # repositorio, que es lo que evita que GitHub desactive el cron por inactividad.
       - name: Guardar el estado si ha cambiado
         run: |
           if [ -z "$(git status --porcelain estado.json)" ]; then
@@ -78,8 +101,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add estado.json
           git commit -m "Estado: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          # Normalmente basta con empujar: el `concurrency` de arriba serializa los
-          # ciclos. Solo si aun así hubiera carrera, se rebasa y se reintenta.
           git push origin "HEAD:${GITHUB_REF_NAME}" || {
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
             git push origin "HEAD:${GITHUB_REF_NAME}"
@@ -104,3 +125,37 @@ jobs:
 
       - id: desplegar
         uses: actions/deploy-pages@v4
+
+      # ── El eslabón ──────────────────────────────────────────────────────────
+      # Aquí es donde se acaban los huecos. En vez de esperar a que GitHub
+      # respete un `schedule` que no respeta, cada ciclo pide el siguiente.
+      #
+      # No sirve el GITHUB_TOKEN del workflow: GitHub bloquea a propósito que un
+      # workflow se dispare a sí mismo con él, justo para evitar bucles. Hace
+      # falta un token propio en el secreto CADENA_TOKEN (ver docs/07-cadencia.md).
+      # Sin ese secreto esto no rompe nada: avisa y se queda como estaba, a merced
+      # del cron.
+      #
+      # `always()` es deliberado: si el sondeo o el despliegue fallan, la cadena
+      # tiene que seguir viva igualmente. Un ciclo malo no puede dejar el panel
+      # congelado hasta que el cron se acuerde.
+      - name: Encadenar el siguiente ciclo
+        if: always()
+        env:
+          CADENA_TOKEN: ${{ secrets.CADENA_TOKEN }}
+        run: |
+          if [ -z "$CADENA_TOKEN" ]; then
+            echo "::warning title=Falta el secreto CADENA_TOKEN::La cadena no puede continuar, así que la cadencia vuelve a depender del cron de GitHub (medido: 39 % de las horas cubiertas). Ver docs/07-cadencia.md."
+            exit 0
+          fi
+          codigo=$(curl -s -o /tmp/respuesta -w '%{http_code}' -X POST \
+            -H "Authorization: Bearer $CADENA_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/dispatches" \
+            -d '{"event_type":"relanzar"}')
+          if [ "$codigo" = "204" ]; then
+            echo "Siguiente ciclo encadenado."
+          else
+            echo "::error title=La cadena se ha roto::GitHub respondió $codigo al encadenar: $(cat /tmp/respuesta). El cron horario la reanudará, pero hasta entonces habrá hueco. Comprueba que CADENA_TOKEN sigue vivo y tiene Contents: read and write."
+            exit 1
+          fi
