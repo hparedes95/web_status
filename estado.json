@@ -101,11 +101,11 @@
       "ultima_hora": "2026-09-09T23:00:00Z"
     },
     "red-electrica": {
-      "estado": "desconocido",
-      "desde": "2026-09-09T10:55:44Z",
+      "estado": "operativo",
+      "desde": "2026-09-09T23:28:56Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": "2026-09-09T10:55:44Z",
+      "roto_desde": null,
       "horas": "uoo----o--o-o-o----o-o--ooooooooooooooooooooooouuuuuuu--uuuuu",
       "ultima_hora": "2026-09-09T23:00:00Z"
     },
