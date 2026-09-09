@@ -29,12 +29,12 @@
       "ultima_hora": "2026-09-09T20:00:00Z"
     },
     "claude": {
-      "estado": "operativo",
-      "desde": "2026-09-04T10:56:35Z",
+      "estado": "desconocido",
+      "desde": "2026-09-09T20:47:31Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oo",
+      "roto_desde": "2026-09-09T20:47:31Z",
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ou",
       "ultima_hora": "2026-09-09T20:00:00Z"
     },
     "chatgpt": {
@@ -47,21 +47,21 @@
       "ultima_hora": "2026-09-09T20:00:00Z"
     },
     "github": {
-      "estado": "operativo",
-      "desde": "2026-09-04T10:56:35Z",
+      "estado": "desconocido",
+      "desde": "2026-09-09T20:47:31Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oo",
+      "roto_desde": "2026-09-09T20:47:31Z",
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ou",
       "ultima_hora": "2026-09-09T20:00:00Z"
     },
     "copilot": {
-      "estado": "operativo",
-      "desde": "2026-09-04T10:56:35Z",
+      "estado": "desconocido",
+      "desde": "2026-09-09T20:47:31Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oo",
+      "roto_desde": "2026-09-09T20:47:31Z",
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ou",
       "ultima_hora": "2026-09-09T20:00:00Z"
     },
     "gemini": {
