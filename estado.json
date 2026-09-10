@@ -7,8 +7,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "uu--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "uu--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "azure": {
       "estado": "operativo",
@@ -16,8 +16,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "aws": {
       "estado": "operativo",
@@ -25,8 +25,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "uo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "uo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "claude": {
       "estado": "degradado",
@@ -34,8 +34,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": "2026-09-10T15:54:58Z",
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouooooooooooooooooooddd",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooodddd",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "chatgpt": {
       "estado": "operativo",
@@ -43,8 +43,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddoooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "github": {
       "estado": "operativo",
@@ -52,8 +52,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooooou",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooooouo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "copilot": {
       "estado": "operativo",
@@ -61,8 +61,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "gemini": {
       "estado": "operativo",
@@ -70,8 +70,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "o--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "cloudflare": {
       "estado": "operativo",
@@ -79,8 +79,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "telefonica": {
       "estado": "operativo",
@@ -88,8 +88,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouoooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "vodafone": {
       "estado": "operativo",
@@ -97,8 +97,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouoooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "red-electrica": {
       "estado": "desconocido",
@@ -106,8 +106,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": "2026-09-10T12:21:38Z",
-      "horas": "uoo----o--o-o-o----o-o--ooooooooooooooooooooooouuuuuuu--uuuuuoooooooooooouuuuuu",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "uoo----o--o-o-o----o-o--ooooooooooooooooooooooouuuuuuu--uuuuuoooooooooooouuuuuuu",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     },
     "energia": {
       "estado": "operativo",
@@ -115,8 +115,8 @@
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--ooooooooooooooooooooooo",
-      "ultima_hora": "2026-09-10T17:00:00Z"
+      "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooooooooooo",
+      "ultima_hora": "2026-09-10T18:00:00Z"
     }
   }
 }
