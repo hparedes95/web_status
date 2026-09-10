@@ -38,11 +38,11 @@
       "ultima_hora": "2026-09-10T14:00:00Z"
     },
     "chatgpt": {
-      "estado": "degradado",
-      "desde": "2026-09-10T02:22:06Z",
+      "estado": "operativo",
+      "desde": "2026-09-10T14:28:56Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": "2026-09-10T02:22:06Z",
+      "roto_desde": null,
       "horas": "oo--o--o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooddddddddooooooooooooooooodd--oooooooddddddddddddd",
       "ultima_hora": "2026-09-10T14:00:00Z"
     },
