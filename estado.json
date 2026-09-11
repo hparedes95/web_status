@@ -38,12 +38,12 @@
       "ultima_hora": "2026-09-11T16:00:00Z"
     },
     "chatgpt": {
-      "estado": "operativo",
-      "desde": "2026-09-11T11:25:00Z",
+      "estado": "degradado",
+      "desde": "2026-09-11T16:23:39Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooooo",
+      "roto_desde": "2026-09-11T16:23:39Z",
+      "horas": "o-o-o-o-o---o---o--o--o-o-o-o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooood",
       "ultima_hora": "2026-09-11T16:00:00Z"
     },
     "github": {
