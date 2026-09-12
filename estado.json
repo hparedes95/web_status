@@ -83,21 +83,21 @@
       "ultima_hora": "2026-09-12T20:00:00Z"
     },
     "telefonica": {
-      "estado": "operativo",
-      "desde": "2026-09-12T11:02:16Z",
+      "estado": "desconocido",
+      "desde": "2026-09-12T20:25:06Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooooooooooooooooouoooooooooooooooooooooooouuooooooooo",
+      "roto_desde": "2026-09-12T20:25:06Z",
+      "horas": "o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooooooooooooooooouoooooooooooooooooooooooouuoooooooou",
       "ultima_hora": "2026-09-12T20:00:00Z"
     },
     "vodafone": {
-      "estado": "operativo",
-      "desde": "2026-09-12T11:02:16Z",
+      "estado": "desconocido",
+      "desde": "2026-09-12T20:25:06Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooooooooooooooooouoooooooooooooooooooooooouuooooooooo",
+      "roto_desde": "2026-09-12T20:25:06Z",
+      "horas": "o-oo----o---o---o--o-o-o-oo-o----o----ooo----o--o-o-o----o-o--oooooooooooooooooooooooooooooo--oooooooooooooooouooooooooooooooooooooouoooooooooooooooooooooooouuoooooooou",
       "ultima_hora": "2026-09-12T20:00:00Z"
     },
     "red-electrica": {
