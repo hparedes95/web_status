@@ -29,12 +29,12 @@
       "ultima_hora": "2026-09-15T09:00:00Z"
     },
     "claude": {
-      "estado": "operativo",
-      "desde": "2026-09-15T04:45:12Z",
+      "estado": "degradado",
+      "desde": "2026-09-15T09:49:13Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "-oooooooooooooooooooooooooooooo--ouooooooooooooooooooddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd--ddd--dddddddddddddddddddddddddddddddddoooooooouooooo",
+      "roto_desde": "2026-09-15T09:49:13Z",
+      "horas": "-oooooooooooooooooooooooooooooo--ouooooooooooooooooooddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd--ddd--dddddddddddddddddddddddddddddddddoooooooouooood",
       "ultima_hora": "2026-09-15T09:00:00Z"
     },
     "chatgpt": {
