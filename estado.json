@@ -30,11 +30,11 @@
     },
     "claude": {
       "estado": "operativo",
-      "desde": "2026-09-14T19:15:17Z",
+      "desde": "2026-09-15T04:45:12Z",
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "-o-o--oooooooooooooooooooooooooooooo--ouooooooooooooooooooddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd--ddd--dddddddddddddddddddddddddddddddddooooooooo",
+      "horas": "-o-o--oooooooooooooooooooooooooooooo--ouooooooooooooooooooddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd--ddd--dddddddddddddddddddddddddddddddddoooooooou",
       "ultima_hora": "2026-09-15T04:00:00Z"
     },
     "chatgpt": {
@@ -48,11 +48,11 @@
     },
     "github": {
       "estado": "operativo",
-      "desde": "2026-09-10T17:51:43Z",
+      "desde": "2026-09-15T04:49:20Z",
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "-o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooooouoooooooooooooooooooooooooooooooooooooooooooooooooooooooooo--ooo--oooooooooooooooooooooooooooooooooooooooooo",
+      "horas": "-o-o--oooooooooooooooooooooooooooooo--ouoooooooooooooooooooouoooooooooooooooooooooooooooooooooooooooooooooooooooooooooo--ooo--ooooooooooooooooooooooooooooooooooooooooou",
       "ultima_hora": "2026-09-15T04:00:00Z"
     },
     "copilot": {
@@ -102,11 +102,11 @@
     },
     "red-electrica": {
       "estado": "operativo",
-      "desde": "2026-09-12T18:17:51Z",
+      "desde": "2026-09-15T04:49:20Z",
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "-o-o--ooooooooooooooooooooooouuuuuuu--uuuuuoooooooooooouuuuuuuuuuuuuuuuuuuuuuoooooooooooooooooooooooooooooooouooooooooo--ooo--oooooooooooooooooooooooooooooooooooooooooo",
+      "horas": "-o-o--ooooooooooooooooooooooouuuuuuu--uuuuuoooooooooooouuuuuuuuuuuuuuuuuuuuuuoooooooooooooooooooooooooooooooouooooooooo--ooo--ooooooooooooooooooooooooooooooooooooooooou",
       "ultima_hora": "2026-09-15T04:00:00Z"
     },
     "energia": {
