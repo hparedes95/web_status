@@ -38,12 +38,12 @@
       "ultima_hora": "2026-09-15T07:00:00Z"
     },
     "chatgpt": {
-      "estado": "operativo",
-      "desde": "2026-09-14T16:08:26Z",
+      "estado": "degradado",
+      "desde": "2026-09-15T07:12:49Z",
       "fallos": 0,
       "alertado": false,
-      "roto_desde": null,
-      "horas": "o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooooddddddddddoooooooooooooooooooooooooo--ooo--oooooddoooooooooooooooooooooddooooooooooooooo",
+      "roto_desde": "2026-09-15T07:12:49Z",
+      "horas": "o--oooddddddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooooddddddddddoooooooooooooooooooooooooo--ooo--oooooddoooooooooooooooooooooddooooooooooooood",
       "ultima_hora": "2026-09-15T07:00:00Z"
     },
     "github": {
