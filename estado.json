@@ -39,11 +39,11 @@
     },
     "chatgpt": {
       "estado": "operativo",
-      "desde": "2026-09-15T07:55:27Z",
+      "desde": "2026-09-15T16:54:49Z",
       "fallos": 0,
       "alertado": false,
       "roto_desde": null,
-      "horas": "dddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooooddddddddddoooooooooooooooooooooooooo--ooo--oooooddoooooooooooooooooooooddoooooooooooooodooooooooo",
+      "horas": "dddddooooooooooooooooodd--ooooooodddddddddddddoooodddooooooooodddddooooddddddddddoooooooooooooooooooooooooo--ooo--oooooddoooooooooooooooooooooddoooooooooooooodooooooood",
       "ultima_hora": "2026-09-15T16:00:00Z"
     },
     "github": {
